@@ -3,6 +3,7 @@ from random import *
 from pygame.locals import *
 import boxItens
 
+
 class Square:
     def __init__(self, ref, side, screen, ide):
         """
@@ -27,7 +28,6 @@ class Square:
         self.actionable = False
         self.stateAction = False
 
-
     ## Seta se o agente está dentro
     def setAgent(self, agentIn):
         self.agent = agentIn
@@ -40,22 +40,52 @@ class Square:
     def show(self):
         ## A depender do que tem dentro, muda a cor
         if self.color != False:
-            pygame.draw.rect(self.screen,self.color,(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                self.color,
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         elif self.agent == True:
-            pygame.draw.rect(self.screen,(0,255,0),(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                (0, 255, 0),
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         elif self.color != False:
-            pygame.draw.rect(self.screen,self.color,(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                self.color,
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         elif self.goal == True:
-            pygame.draw.rect(self.screen,(240,230,140),(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                (240, 230, 140),
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         elif self.color != False:
-            pygame.draw.rect(self.screen,self.color,(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                self.color,
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         elif self.victim == True:
-            pygame.draw.rect(self.screen,(240,0,0),(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                (240, 0, 0),
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         else:
-            pygame.draw.rect(self.screen,(255,255,255),(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen,
+                (255, 255, 255),
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
         ## Desenha o contorno preto
-        pygame.draw.rect(self.screen,(0,0,0),(self.ref[0],self.ref[1],self.side,self.side),1)
-            
+        pygame.draw.rect(
+            self.screen, (0, 0, 0), (self.ref[0], self.ref[1], self.side, self.side), 1
+        )
+
     ## Verifica se clicou dentro do quadrado
     def checkClick(self, posMouse):
         if posMouse[0] < self.ref[0] or posMouse[0] > self.ref[0] + self.side:
@@ -64,11 +94,13 @@ class Square:
             return False
         else:
             ## Se clicou dentro, pinta o quadrado de preto
-            pygame.draw.rect(self.screen,(0,0,0),(self.ref[0],self.ref[1],self.side,self.side))
+            pygame.draw.rect(
+                self.screen, (0, 0, 0), (self.ref[0], self.ref[1], self.side, self.side)
+            )
             ## E abre a caixa de opções que podem estar dentro do quadrado
             self.openOptions()
             return self
-        
+
     ## Abre a caixa de opções de blocos que podem estar dentro do quadrado
     def openOptions(self):
         self.selectItens = boxItens.BoxItens(self.screen)
@@ -86,17 +118,17 @@ class Square:
             return self
         self.updateColor()
         return False
-    
+
     ## Metodo que atualiza a cor do bloco de acordo com o item
     def updateColor(self):
         if self.itemInside == "Parede":
-            self.color = (139,69,19)
+            self.color = (139, 69, 19)
         elif self.itemInside == "Cone":
-            self.color = (255,69,0)
+            self.color = (255, 69, 0)
         elif self.itemInside == "Caixa":
-            self.color = (205,133,63)
+            self.color = (205, 133, 63)
         elif self.itemInside == "Lâmpada":
-            self.color = (0,0,0)
+            self.color = (0, 0, 0)
             self.actionable = True
         elif self.itemInside == "Agente":
             self.agent = True
@@ -106,17 +138,16 @@ class Square:
             self.victim = True
         else:
             self.color = False
-    
+
     ## Método que define as ações dos objetos acionáveis
     def doAction(self, action):
         ## No momento, só tem a lampada. Então a unica ação dela é ligar ou desligar
         if self.itemInside == "Lâmpada":
             if self.stateAction == False:
-                self.color = (255,255,0)
+                self.color = (255, 255, 0)
                 self.stateAction = True
             else:
-                self.color = (0,0,0)
+                self.color = (0, 0, 0)
                 self.stateAction = False
             self.show()
         ## Para adicionar mais elementos, coloque no aqui
-

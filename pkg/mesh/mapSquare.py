@@ -1,9 +1,10 @@
 import square
 import os
 from datetime import datetime
+
 ## Classe que define o Mesh de quadrados
 class MapSquare:
-    def __init__(self, width, heigth, sideSquare, screen, posBegin = (0,0), load = False):
+    def __init__(self, width, heigth, sideSquare, screen, posBegin=(0, 0), load=False):
         """
         @param width: Largura que a malha vai ter
         @param heigth: Altura que a malha vai ter
@@ -12,7 +13,7 @@ class MapSquare:
         @param posBegin: Posicao de inicio
         @param load: Nome do arquivo que contem o mapa inicial (com os objetos e suas posicoes)
         """
-        
+
         self.width = width
         self.heigth = heigth
         self.screen = screen
@@ -25,12 +26,12 @@ class MapSquare:
         self.selectPlace = False
 
         ## Posicao do agente e do objetivo
-        self.posAgent = (0,0)
-        self.posGoal = (1,1)
+        self.posAgent = (0, 0)
+        self.posGoal = (1, 1)
 
         ## Variavel que armazena o arquivo que contem o mapa inicial
         self.load = load
-        
+
         ## Chama o metodo para gerar a malha
         self.generateMap()
 
@@ -44,8 +45,10 @@ class MapSquare:
             xr = 0
             line = []
             ## Percorre as colunas
-            while x < self.width  + self.posBegin[0]:
-                line.append(square.Square((x, y), self.sideSquare, self.screen, (yr, xr)))
+            while x < self.width + self.posBegin[0]:
+                line.append(
+                    square.Square((x, y), self.sideSquare, self.screen, (yr, xr))
+                )
                 x += self.sideSquare
                 xr += 1
             yr += 1
@@ -57,12 +60,12 @@ class MapSquare:
             ## Cria um objeto para armazenar cada informação
             things = {}
             ## Le o arquivo
-            arq = open(os.path.join("config_data" ,self.load+".txt"),"r")
+            arq = open(os.path.join("config_data", self.load + ".txt"), "r")
             for line in arq:
                 ## O formato de cada linha é:
                 ## Nome x,y x,y x,y
                 values = line.split(" ")
-                ## O primeiro dado é o nome do objeto, seguido por varias posicoes 
+                ## O primeiro dado é o nome do objeto, seguido por varias posicoes
                 things[values.pop(0)] = values
 
             ## Percorre os elementos que foram definidos
@@ -82,28 +85,27 @@ class MapSquare:
                 pos = things["Objetivo"][0].split(",")
                 self.posGoal = (int(pos[0]), int(pos[1]))
 
-
     ## Metodo que verifica o clique do mouse
-   
+
     def checkClick(self, posMouse):
 
         ## Se já tiver selecionado um quadrado antes
-        
+
         if self.selectPlace != False:
             obj = self.selectPlace.checkClickItens(posMouse)
             if obj != False:
-                if obj.itemInside == "Agente":                   
+                if obj.itemInside == "Agente":
                     self.listPlaces[self.posAgent[0]][self.posAgent[1]].agent = False
                     self.posAgent = obj.ide
                     obj.agent = True
                 elif obj.itemInside == "Objetivo":
-                    
+
                     self.listPlaces[self.posGoal[0]][self.posGoal[1]].goal = False
                     self.posGoal = obj.ide
                     obj.goal = True
                 obj.itemInside = False
             self.selectPlace = False
-            return True  
+            return True
         else:
             ## Se não, verifica os quadrados e ve se algum deles foi clicado
             for i in self.listPlaces:
@@ -113,7 +115,6 @@ class MapSquare:
                     ## Se sim, seta ele para a variavel
                     self.selectPlace = j.checkClick(posMouse)
             return False
-
 
     ## Metodo que mostra os quadrados na tela
     def show(self):
@@ -139,7 +140,9 @@ class MapSquare:
                 if typeBlock != False:
                     ## Se o tipo do bloco já estiver dentro o things, apenas inclui mais um
                     if typeBlock in things:
-                        things[typeBlock] = things[typeBlock] + " " + str(x) + "," + str(y)
+                        things[typeBlock] = (
+                            things[typeBlock] + " " + str(x) + "," + str(y)
+                        )
                     ## Caso contrário adiciona o tip também
                     else:
                         things[typeBlock] = str(x) + "," + str(y)
@@ -151,8 +154,18 @@ class MapSquare:
             config += i + " " + things[i] + "\n"
         ## Pega a data e hora atual, para gerar sempre um nome diferente para cada arquivo
         today = datetime.now()
-        name = str(today.year) + "" + str(today.month) + "" + str(today.day) + "" + str(today.hour) + "" + str(today.minute) 
+        name = (
+            str(today.year)
+            + ""
+            + str(today.month)
+            + ""
+            + str(today.day)
+            + ""
+            + str(today.hour)
+            + ""
+            + str(today.minute)
+        )
         ## Salva o arquivo
-        fil = open(os.path.join("config_data" ,name+".txt"), "w")
+        fil = open(os.path.join("config_data", name + ".txt"), "w")
         fil.write(config)
         fil.close()

@@ -7,7 +7,7 @@ class State:
         self.col = col
 
     def setRowCol(self, row, col):
-        #Esse método não é necessário em Python, pois os atributos podem ser acessados diretamente
+        # Esse método não é necessário em Python, pois os atributos podem ser acessados diretamente
         self.row = row
         self.col = col
 
@@ -17,6 +17,6 @@ class State:
         else:
             return False
 
-    def __str__(self): 
+    def __str__(self):
         # Permite fazer um print(state) diretamente
         return "({0:d}, {1:d})".format(self.row, self.col)
