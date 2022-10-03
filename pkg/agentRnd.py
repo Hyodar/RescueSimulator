@@ -29,7 +29,7 @@ class AgentRnd:
         self.model = model
 
         ## Obtem o tempo que tem para executar
-        self.tl = configDict["Tl"]
+        self.tl = configDict["Te"]
         print("Tempo disponivel: ", self.tl)
 
         ## Pega o tipo de mesh, que está no model (influência na movimentação)

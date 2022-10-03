@@ -20,19 +20,18 @@ def buildMaze(model):
 
 
 def main():
-    # Lê arquivo config.txt
-    arq = open(os.path.join("config_data", "config.txt"), "r")
+    # Lê arquivo de configuração
     configDict = {}
-    for line in arq:
-        ## O formato de cada linha é:var=valor
-        ## As variáveis são
-        ##  maxLin, maxCol que definem o tamanho do labirinto
-        ## Tv e Ts: tempo limite para vasculhar e tempo para salvar
-        ## Bv e Bs: bateria inicial disponível ao agente vasculhador e ao socorrista
-        ## Ks :capacidade de carregar suprimentos em número de pacotes (somente para o ag. socorrista)
+    with open(os.path.join("config_data", "ambiente.txt"), "r") as f:
+        for line in f:
+            field, *values = line.replace("\n", "").split(" ")
 
-        values = line.split("=")
-        configDict[values[0]] = int(values[1])
+            if field == "Vitimas" or field == "Parede":
+                configDict[field] = map(lambda value: value.split(",").map(int), values)
+            elif field == "Base":
+                configDict[field] = map(int, values[0].split(","))
+            elif field == "XMax" or field == "YMax" or field == "Te" or field == "Ts":
+                configDict[field] = int(values[0])
 
     print("dicionario config: ", configDict)
 
@@ -42,7 +41,7 @@ def main():
     ## nome do arquivo de configuracao do ambiente - deve estar na pasta <proj>/config_data
     loadMaze = "ambiente"
 
-    model = Model(configDict["maxLin"], configDict["maxCol"], mesh, loadMaze)
+    model = Model(configDict["XMax"], configDict["YMax"], mesh, loadMaze)
     buildMaze(model)
 
     model.maze.board.posAgent

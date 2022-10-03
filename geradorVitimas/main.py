@@ -15,7 +15,7 @@ def main():
     for line in arq:
         ## O formato de cada linha é:var=valor
         ## As variáveis são
-        ##  maxLin, maxCol que definem o tamanho do labirinto
+        ##  XMax, maxCol que definem o tamanho do labirinto
         ## Tv e Ts: tempo limite para vasculhar e tempo para salvar
         ## Bv e Bs: bateria inicial disponível ao agente vasculhador e ao socorrista
         ## Ks :capacidade de carregar suprimentos em número de pacotes (somente para o ag. socorrista)
@@ -25,7 +25,7 @@ def main():
 
     print("dicionario config: ", configDict)
 
-    vict = Vict_gen(configDict["maxLin"], configDict["maxCol"], 42)
+    vict = Vict_gen(configDict["XMax"], configDict["YMax"], 42)
 
 
 if __name__ == "__main__":

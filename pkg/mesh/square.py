@@ -134,7 +134,7 @@ class Square:
             self.agent = True
         elif self.itemInside == "Objetivo":
             self.goal = True
-        elif self.itemInside == "Vitima":
+        elif self.itemInside == "Vitima" or self.itemInside == "Vitimas":
             self.victim = True
         else:
             self.color = False

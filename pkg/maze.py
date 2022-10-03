@@ -4,12 +4,12 @@ import math
 
 ## Importa os tipos de malha disponíveis
 sys.path.append(os.path.join("pkg", "mesh"))
-import mapSquare, mapTriangle
+import mapSquare
 
 ## Classe que define o labirinto onde o agente esta
 class Maze:
     """Maze representa um labirinto com paredes. A indexação das posições do labirinto é dada por par ordenado (linha, coluna).
-    A linha inicial é zero e a linha máxima é (maxLin - 1). A coluna inicial é zero e a máxima é (maxCol - 1)."""
+    A linha inicial é zero e a linha máxima é (XMax - 1). A coluna inicial é zero e a máxima é (maxCol - 1)."""
 
     def __init__(self, maxRows, maxColumns, mesh="square", screen=False, load=False):
         """Construtor do labirinto
@@ -83,14 +83,14 @@ class Maze:
                 if j.itemInside == "Parede":
                     pos = j.ide
                     self.walls[pos[0]][pos[1]] = 1
-                elif j.itemInside == "Vitima":
+                elif j.itemInside == "Vitima" or j.itemInside == "Vitimas":
                     pos = j.ide
                     self.numberOfVictims = self.numberOfVictims + 1
                     self.victims[pos[0]][pos[1]] = self.numberOfVictims
 
                     vs_line = vs_file.readline()
                     if vs_line:
-                        values = [float(signal) for signal in vs_line.split(" ")]
+                        values = [float(signal) for signal in vs_line.split(",")]
                         print(
                             "sinais vitais da vitima em (",
                             pos[0],
