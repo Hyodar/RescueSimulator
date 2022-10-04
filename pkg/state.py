@@ -12,10 +12,23 @@ class State:
         self.col = col
 
     def __eq__(self, other):
-        if self.row == other.row and self.col == other.col:
-            return True
-        else:
+        try:
+            return self.row == other.row and self.col == other.col
+        except AttributeError:
             return False
+        except:
+            raise
+
+    def __ne__(self, other):
+        try:
+            return self.row != other.row or self.col != other.col
+        except AttributeError:
+            return False
+        except:
+            raise
+
+    def __hash__(self):
+        return hash(self.__str__())
 
     def __str__(self):
         # Permite fazer um print(state) diretamente
