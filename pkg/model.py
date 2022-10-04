@@ -125,6 +125,9 @@ class Model:
         Esse metodo deve ser alterado de acordo com o action a ser passado
         """
 
+        if action == "nop":
+            return
+
         if action == "N":
             row = self.agentPos[0] - 1
             col = self.agentPos[1]
