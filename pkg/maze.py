@@ -73,7 +73,6 @@ class Maze:
 
         ## Metodo que atualiza a lista dos objetos (vitimas) que estao no labirinto
         vs_file = open(os.path.join("config_data", "sinaisvitais.txt"), "r")
-        diff_file = open(os.path.join("config_data", "difacesso.txt"), "r")
 
         ## Pega a matriz com todos os lugares (seja quadrado ou triangulo)
         aux = self.board.getListPlaces()
@@ -104,24 +103,6 @@ class Maze:
                     else:
                         print(
                             "!!! warning: número de vítimas do ambiente maior do que número de sinais vitais"
-                        )
-
-                    diff_line = diff_file.readline()
-                    if diff_line:
-                        values = [float(signal) for signal in diff_line.split(" ")]
-                        print(
-                            "dif. de acesso a vitima em (",
-                            pos[0],
-                            ",",
-                            pos[1],
-                            ") : ",
-                            values,
-                        )
-                        self.diffAccess.append([])
-                        self.diffAccess[self.numberOfVictims - 1].append(values)
-                    else:
-                        print(
-                            "!!! warning: número de vítimas do ambiente maior do que número de dif. de acesso"
                         )
 
     ## Metodo que retorna a instancia criada da mesh

@@ -124,8 +124,7 @@ class Model:
         """
         Esse metodo deve ser alterado de acordo com o action a ser passado
         """
-        # result = plan.do()
-        # step = result[0]
+
         if action == "N":
             row = self.agentPos[0] - 1
             col = self.agentPos[1]
@@ -162,15 +161,6 @@ class Model:
         if victimId < self.getNumberOfVictims():
             return self.maze.vitalSignals[victimId - 1]
 
-        return []
-
-    def getDifficultyOfAcess(self, victimId):
-        """retorna os dados de dificuldade de acesso à vítima identificada pelo id
-        @param victimId é a posição da vítima dentro do vetor de sinais vitais
-        @return a lista de sinais vitais ou uma lista vazia caso a vítima nao exista
-        """
-        if victimId < self.getNumberOfVictims():
-            return self.maze.diffAccess[victimId - 1]
         return []
 
     def isThereVictim(self):
