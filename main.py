@@ -5,7 +5,7 @@ import time
 ## Importa as classes que serao usadas
 sys.path.append(os.path.join("pkg"))
 from model import Model
-from agentRnd import AgentRnd
+from agentExplorer import AgentExplorer
 
 
 ## Metodo utilizado para permitir que o usuario construa o labirindo clicando em cima
@@ -27,9 +27,11 @@ def main():
             field, *values = line.replace("\n", "").split(" ")
 
             if field == "Vitimas" or field == "Parede":
-                configDict[field] = map(lambda value: value.split(",").map(int), values)
+                configDict[field] = tuple(
+                    map(lambda value: map(int, value.split(",")), values)
+                )
             elif field == "Base":
-                configDict[field] = map(int, values[0].split(","))
+                configDict[field] = tuple(map(int, values[0].split(",")))
             elif field == "XMax" or field == "YMax" or field == "Te" or field == "Ts":
                 configDict[field] = int(values[0])
 
@@ -44,21 +46,21 @@ def main():
     model = Model(configDict["XMax"], configDict["YMax"], mesh, loadMaze)
     buildMaze(model)
 
-    model.maze.board.posAgent
-    model.maze.board.posGoal
+    model.maze.board.posAgent = configDict["Base"]
+    model.maze.board.posGoal = configDict["Base"]
     # Define a posição inicial do agente no ambiente - corresponde ao estado inicial
     model.setAgentPos(model.maze.board.posAgent[0], model.maze.board.posAgent[1])
     model.setGoalPos(model.maze.board.posGoal[0], model.maze.board.posGoal[1])
     model.draw()
 
     # Cria um agente
-    agent = AgentRnd(model, configDict)
+    agent = AgentExplorer(model, configDict)
 
     ## Ciclo de raciocínio do agente
     agent.deliberate()
     while agent.deliberate() != -1:
         model.draw()
-        time.sleep(0.3)
+        time.sleep(0.01)
     model.draw()
 
 
