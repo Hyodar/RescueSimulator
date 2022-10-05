@@ -42,6 +42,10 @@ class AgentExplorer:
             [NodeType.UNKNOWN for j in range(self.model.columns)]
             for i in range(self.model.rows)
         ]
+        self.victimVitalSignals = [
+            [None for j in range(self.model.columns)]
+            for i in range(self.model.rows)
+        ]
 
         ## Obtem o tempo que tem para executar
         self.tl = configDict["Te"]
@@ -119,9 +123,32 @@ class AgentExplorer:
         self.tl -= self.prob.getActionCost(self.previousAction)
         print("Tempo disponivel: ", self.tl)
 
-        if self.prob.goalTest(self.currentState) and self.tl <= 0.5:
+        if self.prob.goalTest(self.currentState) and self.plan.goalTest(self.currentState):
             print("!!! Objetivo atingido !!!")
             del self.libPlan[0]
+
+            with open(os.path.join("config_data", "ambiente_rescuer.txt"), "w") as ambientRescuer:
+                with open(os.path.join("config_data", "ambiente.txt"), "r") as ambient:
+                    for line in ambient:
+                        if not line.startswith("Vitimas") and not line.startswith("Parede"):
+                            ambientRescuer.write(line)
+
+                victims = []
+                walls = []
+
+                for i in range(self.model.rows):
+                    for j in range(self.model.columns):
+                        if self.map[i][j] == NodeType.VICTIM:
+                            victims.append((i, j))
+                        elif self.map[i][j] == NodeType.OBSTACLE or self.map[i][j] == NodeType.UNKNOWN:
+                            walls.append((i, j))
+                
+                ambientRescuer.write(f"Vitimas {' '.join(list(map(lambda el: f'{el[0]},{el[1]}', victims)))}\n")
+                ambientRescuer.write(f"Parede {' '.join(list(map(lambda el: f'{el[0]},{el[1]}', walls)))}")
+
+                with open(os.path.join("config_data", "sinaisvitais_rescuer.txt"), "w") as vitalSignalsRescuer:
+                    lines = [f"{idx + 1}," + ",".join(map(str, self.victimVitalSignals[pos[0]][pos[1]])) for (idx, pos) in enumerate(victims)]
+                    vitalSignalsRescuer.write("\n".join(lines))
 
         if self.map[self.currentState.row][self.currentState.col] == NodeType.UNKNOWN:
             self.map[self.currentState.row][self.currentState.col] = NodeType.EMPTY
@@ -129,9 +156,7 @@ class AgentExplorer:
             victimId = self.victimPresenceSensor()
             if victimId > 0:
                 self.map[self.currentState.row][self.currentState.col] = NodeType.VICTIM
-                self.map[self.currentState.row][
-                    self.currentState.col
-                ].vitalSignals = self.victimVitalSignalsSensor(victimId)
+                self.victimVitalSignals[self.currentState.row][self.currentState.col] = self.victimVitalSignalsSensor(victimId)
                 print(
                     "vitima encontrada em ",
                     self.currentState,
@@ -157,8 +182,8 @@ class AgentExplorer:
         if self.expectedState != self.positionSensor():
             self.map[self.expectedState.row][self.expectedState.col] = NodeType.OBSTACLE
 
-        # for mapLine in self.map:
-        #     print(list(map(int, mapLine)))
+        for mapLine in self.map:
+            print(list(map(int, mapLine)))
 
         return 1
 
@@ -192,6 +217,7 @@ class AgentExplorer:
         """Simula um sensor que realiza a leitura dos sinais da vitima
         @param o id da vítima
         @return a lista de sinais vitais (ou uma lista vazia se não tem vítima com o id)"""
+        self.tl -= 2
         return self.model.getVictimVitalSignals(victimId)
 
     ## Metodo que atualiza a biblioteca de planos, de acordo com o estado atual do agente
