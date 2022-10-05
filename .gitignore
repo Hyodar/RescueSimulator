@@ -364,3 +364,8 @@ FodyWeavers.xsd
 
 # VSCode/IDE stuff
 .vscode
+
+# Custom entries
+*_rescuer.txt
+explorer.log
+rescuer.log

@@ -23,8 +23,9 @@ def buildMaze(model):
 
 def main():
     # Lê arquivo de configuração
+    filename = "ambiente.txt" if sys.argv[1] == "explorer" else "ambiente_rescuer.txt"
     configDict = {}
-    with open(os.path.join("config_data", "ambiente.txt"), "r") as f:
+    with open(os.path.join("config_data", filename), "r") as f:
         for line in f:
             field, *values = line.replace("\n", "").split(" ")
 
@@ -43,7 +44,7 @@ def main():
     mesh = "square"
 
     ## nome do arquivo de configuracao do ambiente - deve estar na pasta <proj>/config_data
-    loadMaze = "ambiente"
+    loadMaze = "ambiente" if sys.argv[1] == "explorer" else "ambiente_rescuer"
 
     model = Model(configDict["XMax"], configDict["YMax"], mesh, loadMaze)
     buildMaze(model)
@@ -64,14 +65,6 @@ def main():
         model.draw()
         # time.sleep(0.01)
     model.draw()
-
-    for i in range(0, model.rows):
-        for j in range(0, model.columns):
-            if explorer.map[i][j].type == NodeType.VICTIM:
-                print(f"*{explorer.map[i][j].gravityLevel}*", end=" ")
-            else:
-                print(int(explorer.map[i][j].type), end="   ")
-        print()
 
     # Cria um agente socorrista
     rescuer = AgentRescuer(model, configDict, explorer.map)

@@ -41,10 +41,13 @@ class ExplorerPlan:
 
         self.backtrack = []
         self.discovered = [[False for j in range(maxColumns)] for i in range(maxRows)]
-        self.counter = 0
+        self.finished = False
 
     def updateCurrentState(self, state):
         self.currentState = state
+
+    def goalTest(self, state):
+        return self.finished
 
     def isPossibleToMove(self, fromState, toState):
         """Verifica se eh possivel ir da posicao atual para o estado (lin, col) considerando
@@ -216,6 +219,10 @@ class ExplorerPlan:
                 break
 
         if direction is None:
+            if len(self.backtrack) == 0:
+                self.finished = True
+                return "nop", self.currentState
+
             direction = reverse[self.backtrack.pop()]
 
         self.previousState = State(

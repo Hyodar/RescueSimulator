@@ -30,7 +30,7 @@ class Maze:
 
         # lista que contem os sinais vitais de cada uma das vitimas. É uma lista composta por sublistas
         # onde o índice de uma sublista corresponde ao id da vítima (ver self.victims)
-        self.vitalSignals = []
+        self.vitalSignals = {}
 
         # Lista que contem os dados de dificuldade de acesso a cada uma das vitimas. É uma lista composta por
         # sublistas onde o índice de uma sublista corresponde ao ide da vítima (anda junto com self.victims)
@@ -72,7 +72,8 @@ class Maze:
     def updateWalls(self):
 
         ## Metodo que atualiza a lista dos objetos (vitimas) que estao no labirinto
-        vs_file = open(os.path.join("config_data", "sinaisvitais.txt"), "r")
+        filename = "sinaisvitais.txt" if sys.argv[1] == "explorer" else "sinaisvitais_rescuer.txt"
+        vs_file = open(os.path.join("config_data", filename), "r")
 
         ## Pega a matriz com todos os lugares (seja quadrado ou triangulo)
         aux = self.board.getListPlaces()
@@ -84,22 +85,23 @@ class Maze:
                     self.walls[pos[0]][pos[1]] = 1
                 elif j.itemInside == "Vitima" or j.itemInside == "Vitimas":
                     pos = j.ide
-                    self.numberOfVictims = self.numberOfVictims + 1
-                    self.victims[pos[0]][pos[1]] = self.numberOfVictims
+                    self.numberOfVictims += 1
 
                     vs_line = vs_file.readline()
                     if vs_line:
-                        values = [float(signal) for signal in vs_line.split(",")]
+                        values = vs_line.split(",")
+                        vitalSignals = [float(signal) for signal in values[1:]]
+
+                        self.victims[pos[0]][pos[1]] = self.numberOfVictims
                         print(
                             "sinais vitais da vitima em (",
                             pos[0],
                             ",",
                             pos[1],
                             ") : ",
-                            values,
+                            vitalSignals,
                         )
-                        self.vitalSignals.append([])
-                        self.vitalSignals[self.numberOfVictims - 1].append(values)
+                        self.vitalSignals[self.numberOfVictims - 1] = vitalSignals
                     else:
                         print(
                             "!!! warning: número de vítimas do ambiente maior do que número de sinais vitais"
