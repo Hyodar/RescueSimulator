@@ -19,13 +19,6 @@ sys.path.append(os.path.join("pkg", "planner"))
 from planner import Planner
 from node import Node, NodeType
 
-GRAVITY_LEVEL = {
-    1: [0.0, 25.0],
-    2: [25.0, 50.0],
-    3: [50.0, 75.0],
-    4: [75.0, 100.0]
-}
-
 ## Classe que define o Agente
 class AgentExplorer:
     def __init__(self, model, configDict):
@@ -150,14 +143,11 @@ class AgentExplorer:
             victimId = self.victimPresenceSensor()
             if victimId > 0:
                 vitalSignals = self.victimVitalSignalsSensor(victimId)
-                gravity = vitalSignals[5]
 
                 node = self.map[self.currentState.row][self.currentState.col]
 
                 node.type = NodeType.VICTIM
-                node.gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
                 node.vitalSignals = vitalSignals
-                node.victimId = victimId
                 print(
                     "vitima encontrada em ",
                     self.currentState,

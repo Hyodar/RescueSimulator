@@ -9,7 +9,7 @@ from enum import IntEnum
 
 ## Importa Classes necessarias para o funcionamento
 from model import Model
-from node import NodeType
+from node import Node, NodeType
 from problem import Problem
 from state import State
 from random import randint
@@ -21,10 +21,16 @@ from rescuerPlan import RescuerPlan
 sys.path.append(os.path.join("pkg", "planner"))
 from planner import Planner
 
+GRAVITY_LEVEL = {
+    1: [0.0, 25.0],
+    2: [25.0, 50.0],
+    3: [50.0, 75.0],
+    4: [75.0, 100.0]
+}
 
 ## Classe que define o Agente
 class AgentRescuer:
-    def __init__(self, model, configDict, discoveredMap):
+    def __init__(self, model, configDict):
         """
         Construtor do agente rescuer
         @param model referencia o ambiente onde o agente estah situado
@@ -32,10 +38,30 @@ class AgentRescuer:
 
         self.model = model
 
-        self.map = discoveredMap
+        self.map = [
+            [Node(NodeType.EMPTY, i, j) for j in range(self.model.columns)]
+            for i in range(self.model.rows)
+        ]
+
+        for i in range(self.model.rows):
+            for j in range(self.model.columns):
+                node = self.map[i][j]
+                
+                if (i, j) in configDict["Vitimas"]:
+                    victimId = configDict["Vitimas"].index((i, j)) + 1
+                    gravity = self.model.maze.vitalSignals[victimId - 1][5]
+
+                    node.type = NodeType.VICTIM
+                    node.victimId = victimId
+                    node.gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
+                elif (i, j) in configDict["Parede"]:
+                    node.type = NodeType.OBSTACLE
+
+        for mapLine in self.map:
+            print(list(map(lambda node: int(node.type), mapLine)))
 
         ## Obtem o tempo que tem para executar
-        self.tl = configDict["Te"]
+        self.tl = configDict["Ts"]
         print("Tempo disponivel: ", self.tl)
 
         ## Pega o tipo de mesh, que está no model (influência na movimentação)

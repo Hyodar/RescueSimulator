@@ -31,7 +31,7 @@ def main():
 
             if field == "Vitimas" or field == "Parede":
                 configDict[field] = tuple(
-                    map(lambda value: map(int, value.split(",")), values)
+                    map(lambda value: tuple(map(int, value.split(","))), values)
                 )
             elif field == "Base":
                 configDict[field] = tuple(map(int, values[0].split(",")))
@@ -56,25 +56,26 @@ def main():
     model.setGoalPos(model.maze.board.posGoal[0], model.maze.board.posGoal[1])
     model.draw()
 
-    # Cria um agente explorador
-    explorer = AgentExplorer(model, configDict)
+    if sys.argv[1] == "explorer":
+        # Cria um agente explorador
+        explorer = AgentExplorer(model, configDict)
 
-    ## Ciclo de raciocínio do agente
-    explorer.deliberate()
-    while explorer.deliberate() != -1:
+        ## Ciclo de raciocínio do agente
+        explorer.deliberate()
+        while explorer.deliberate() != -1:
+            model.draw()
+            # time.sleep(0.01)
         model.draw()
-        # time.sleep(0.01)
-    model.draw()
+    else:
+        # Cria um agente socorrista
+        rescuer = AgentRescuer(model, configDict)
 
-    # Cria um agente socorrista
-    rescuer = AgentRescuer(model, configDict, explorer.map)
-
-    ## Ciclo de raciocínio do agente
-    rescuer.deliberate()
-    while rescuer.deliberate() != -1:
+        ## Ciclo de raciocínio do agente
+        rescuer.deliberate()
+        while rescuer.deliberate() != -1:
+            model.draw()
+            # time.sleep(0.1)
         model.draw()
-        # time.sleep(0.1)
-    model.draw()
 
 
 if __name__ == "__main__":
