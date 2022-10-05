@@ -19,6 +19,8 @@ sys.path.append(os.path.join("pkg", "planner"))
 from planner import Planner
 from node import Node, NodeType
 
+GRAVITY_LEVEL = {1: [0.0, 25.0], 2: [25.0, 50.0], 3: [50.0, 75.0], 4: [75.0, 100.0]}
+
 ## Classe que define o Agente
 class AgentExplorer:
     def __init__(self, model, configDict):
@@ -33,6 +35,8 @@ class AgentExplorer:
             [Node(NodeType.UNKNOWN, i, j) for j in range(self.model.columns)]
             for i in range(self.model.rows)
         ]
+
+        self.totalVictims = configDict["Vitimas"]
 
         ## Obtem o tempo que tem para executar
         self.tl = configDict["Te"]
@@ -110,44 +114,106 @@ class AgentExplorer:
         self.tl -= self.prob.getActionCost(self.previousAction)
         print("Tempo disponivel: ", self.tl)
 
-        if self.prob.goalTest(self.currentState) and self.plan.goalTest(self.currentState):
+        if self.prob.goalTest(self.currentState) and self.plan.goalTest(
+            self.currentState
+        ):
             print("!!! Objetivo atingido !!!")
             del self.libPlan[0]
 
-            with open(os.path.join("config_data", "ambiente_rescuer.txt"), "w") as ambientRescuer:
+            victims = []
+
+            with open(
+                os.path.join("config_data", "ambiente_rescuer.txt"), "w"
+            ) as ambientRescuer:
                 with open(os.path.join("config_data", "ambiente.txt"), "r") as ambient:
                     for line in ambient:
-                        if not line.startswith("Vitimas") and not line.startswith("Parede"):
+                        if not line.startswith("Vitimas") and not line.startswith(
+                            "Parede"
+                        ):
                             ambientRescuer.write(line)
 
-                victims = []
                 walls = []
 
                 for i in range(self.model.rows):
                     for j in range(self.model.columns):
                         if self.map[i][j].type == NodeType.VICTIM:
-                            victims.append((i, j))
-                        elif self.map[i][j].type == NodeType.OBSTACLE or self.map[i][j].type == NodeType.UNKNOWN:
+                            victims.append((i, j, self.map[i][j].gravityLevel))
+                        elif (
+                            self.map[i][j].type == NodeType.OBSTACLE
+                            or self.map[i][j].type == NodeType.UNKNOWN
+                        ):
                             walls.append((i, j))
 
-                ambientRescuer.write(f"Vitimas {' '.join(list(map(lambda el: f'{el[0]},{el[1]}', victims)))}\n")
-                ambientRescuer.write(f"Parede {' '.join(list(map(lambda el: f'{el[0]},{el[1]}', walls)))}")
+                ambientRescuer.write(
+                    f"Vitimas {' '.join(list(map(lambda el: f'{el[0]},{el[1]}', victims)))}\n"
+                )
+                ambientRescuer.write(
+                    f"Parede {' '.join(list(map(lambda el: f'{el[0]},{el[1]}', walls)))}"
+                )
 
-                with open(os.path.join("config_data", "sinaisvitais_rescuer.txt"), "w") as vitalSignalsRescuer:
-                    lines = [f"{idx + 1}," + ",".join(map(str, self.map[pos[0]][pos[1]].vitalSignals)) for (idx, pos) in enumerate(victims)]
+                with open(
+                    os.path.join("config_data", "sinaisvitais_rescuer.txt"), "w"
+                ) as vitalSignalsRescuer:
+                    lines = [
+                        f"{idx + 1},"
+                        + ",".join(map(str, self.map[pos[0]][pos[1]].vitalSignals))
+                        for (idx, pos) in enumerate(victims)
+                    ]
                     vitalSignalsRescuer.write("\n".join(lines))
+            print(victims)
 
-        if self.map[self.currentState.row][self.currentState.col].type == NodeType.UNKNOWN:
+            discoveredGravities = [0, 0, 0, 0]
+            for victim in victims:
+                discoveredGravities[victim[2] - 1] += 1
+
+            totalGravities = [0, 0, 0, 0]
+            for i in range(len(self.totalVictims)):
+                vitalSignals = self.model.maze.vitalSignals[i]
+                gravity = vitalSignals[5]
+                gravityLevel = [
+                    k
+                    for k, v in GRAVITY_LEVEL.items()
+                    if gravity > v[0] and gravity <= v[1]
+                ][0]
+                totalGravities[gravityLevel - 1] += 1
+
+            veg = sum(
+                (
+                    gravity * (4 - idx)
+                    for (idx, gravity) in enumerate(discoveredGravities)
+                )
+            ) / sum(
+                (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
+            )
+
+            print("Estatísticas:")
+            print("------------------------------")
+            print(
+                f"pve = {len(victims)}/{len(self.totalVictims)} = {len(victims) / len(self.totalVictims)}"
+            )
+            print(f"tve = {self.tl}/{len(victims)} = {self.tl / len(victims)}")
+            print(f"veg = {veg}")
+
+        if (
+            self.map[self.currentState.row][self.currentState.col].type
+            == NodeType.UNKNOWN
+        ):
             self.map[self.currentState.row][self.currentState.col].type = NodeType.EMPTY
 
             victimId = self.victimPresenceSensor()
             if victimId > 0:
                 vitalSignals = self.victimVitalSignalsSensor(victimId)
+                gravity = vitalSignals[5]
 
                 node = self.map[self.currentState.row][self.currentState.col]
 
                 node.type = NodeType.VICTIM
                 node.vitalSignals = vitalSignals
+                node.gravityLevel = [
+                    k
+                    for k, v in GRAVITY_LEVEL.items()
+                    if gravity > v[0] and gravity <= v[1]
+                ][0]
                 print(
                     "vitima encontrada em ",
                     self.currentState,
@@ -171,7 +237,9 @@ class AgentExplorer:
         self.expectedState = result[1]
 
         if self.expectedState != self.positionSensor():
-            self.map[self.expectedState.row][self.expectedState.col].type = NodeType.OBSTACLE
+            self.map[self.expectedState.row][
+                self.expectedState.col
+            ].type = NodeType.OBSTACLE
 
         for mapLine in self.map:
             print(list(map(lambda node: int(node.type), mapLine)))
