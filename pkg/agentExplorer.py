@@ -40,6 +40,7 @@ class AgentExplorer:
 
         ## Obtem o tempo que tem para executar
         self.tl = configDict["Te"]
+        self.totalTime = configDict["Te"]
         print("Tempo disponivel: ", self.tl)
 
         ## Pega o tipo de mesh, que está no model (influência na movimentação)
@@ -191,7 +192,9 @@ class AgentExplorer:
             print(
                 f"pve = {len(victims)}/{len(self.totalVictims)} = {len(victims) / len(self.totalVictims)}"
             )
-            print(f"tve = {self.tl}/{len(victims)} = {self.tl / len(victims)}")
+            print(
+                f"tve = {self.totalTime - self.tl}/{len(victims)} = {self.tl / len(victims)}"
+            )
             print(f"veg = {veg}")
 
         if (
