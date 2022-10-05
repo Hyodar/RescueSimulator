@@ -1,5 +1,5 @@
-from array import array
 from state import State
+from node import NodeType
 
 possibilities = ["N", "S", "L", "O", "NE", "NO", "SE", "SO"]
 movePos = {
@@ -26,13 +26,16 @@ reverse = {
 
 class RescuerPlan:
     def __init__(
-        self, maxRows, maxColumns, goal, initialState, discoveredMap, name="none", mesh="square"
+        self, maxRows, maxColumns, goal, initialState, discoveredMap: list, name="none", mesh="square"
     ):
         """
         Define as variaveis necessárias para a utilização do rescuer plan por um unico agente.
         """
-        print(discoveredMap)
-        self.walls = []
+        self.walls = [
+            (row, col) for row,_ in enumerate(discoveredMap)
+                for col,_ in enumerate(discoveredMap[row])
+                    if discoveredMap[row][col].type == NodeType.OBSTACLE or discoveredMap[row][col].type == NodeType.UNKNOWN
+        ]
         self.maxRows = maxRows
         self.maxColumns = maxColumns
         self.initialState = initialState
@@ -42,8 +45,17 @@ class RescuerPlan:
         self.previousState = initialState
 
         self.backtrack = []
-        self.discovered = discoveredMap
-        # self.discovered = [[False for j in range(maxColumns)] for i in range(maxRows)]
+        self.map = discoveredMap
+        self.victims = [discoveredMap[row][col] for row,_ in enumerate(discoveredMap)
+            for col,_ in enumerate(discoveredMap[row])
+                if discoveredMap[row][col].type == NodeType.VICTIM
+        ]
+
+        self.currentVictim = None
+
+        print(self.victims)
+        self.victims.sort(key= lambda victim: victim.gravityLevel)
+        print(self.victims)
         self.counter = 0
 
     def updateCurrentState(self, state):
@@ -79,7 +91,7 @@ class RescuerPlan:
 
         return True
 
-    def aStar(self, target):
+    def aStar(self, initial, target):
         def heuristic(state):
             return float("inf") if (state.row, state.col) in self.walls else 1
 
@@ -92,25 +104,22 @@ class RescuerPlan:
                     state.col + movePos[possibility][1],
                 )
 
-                if (
-                    self.isPossibleToMove(state, nextState)
-                    and self.discovered[nextState.row][nextState.col]
-                ):
+                if self.isPossibleToMove(state, nextState):
                     weight = 1 if len(possibility) == 1 else 1.5
                     resp.append((nextState, weight))
 
             return resp
 
-        openList = set([self.currentState])
+        openList = set([initial])
         closedList = set([])
 
         poo = [
             [float("inf") for j in range(self.maxColumns)] for i in range(self.maxRows)
         ]
-        poo[self.currentState.row][self.currentState.col] = 0
+        poo[initial.row][initial.col] = 0
 
         par = [[False for j in range(self.maxColumns)] for i in range(self.maxRows)]
-        par[self.currentState.row][self.currentState.col] = self.currentState
+        par[initial.row][initial.col] = initial
 
         while len(openList) > 0:
             n = None
@@ -131,7 +140,7 @@ class RescuerPlan:
                     reconstructedPath.append(n)
                     n = par[n.row][n.col]
 
-                reconstructedPath.append(self.currentState)
+                reconstructedPath.append(initial)
                 reconstructedPath.reverse()
 
                 print(
@@ -165,68 +174,59 @@ class RescuerPlan:
         @return: tupla contendo a acao (direcao) e uma instância da classe State que representa a posição esperada após a execução
         """
 
-        path = self.aStar(self.goalPos)
-        cost = 0
-        for (idx, state) in enumerate(path[0:-1]):
-            cost += 1
+        self.currentVictim = next((v for v in self.victims if v.type == NodeType.VICTIM), None)
+        pathVictim = self.aStar(self.currentState, self.currentVictim.state if self.currentVictim else self.goalPos)
+        pathGoal = self.aStar(pathVictim[-1], self.goalPos)
+        costVictim = 0
+        costGoal = 0
+        for (idx, state) in enumerate(pathVictim[0:-1]):
+            costVictim += 1
             if (
-                state.row - path[idx + 1].row != 0
-                and state.col - path[idx + 1].col != 0
+                state.row - pathVictim[idx + 1].row != 0
+                and state.col - pathVictim[idx + 1].col != 0
             ):
-                cost += 0.5
+                costVictim += 0.5
 
-        if cost >= tl - 0.5:
-            if len(path) == 1:
-                return "nop", self.currentState
-
-            path.reverse()
-            path.pop()
-
-            nextState = path.pop()
-            delta = (
-                nextState.row - self.currentState.row,
-                nextState.col - self.currentState.col,
-            )
-
-            codeRow = {0: "", 1: "S", -1: "N"}
-            codeCol = {0: "", 1: "L", -1: "O"}
-
-            direction = f"{codeRow[delta[0]]}{codeCol[delta[1]]}"
-            if len(direction) == 2:
-                direction = direction.replace("L", "E")
-
-            return direction, nextState
-
-        if self.currentState != self.previousState:
-            self.walls.append((self.previousState.row, self.previousState.col))
-            self.backtrack.pop()
-
-        self.discovered[self.previousState.row][self.previousState.col] = True
-
-        direction = None
-        for possibility in possibilities:
-            node = (
-                self.currentState.row + movePos[possibility][0],
-                self.currentState.col + movePos[possibility][1],
-            )
-
+        for (idx, state) in enumerate(pathGoal[0:-1]):
+            costGoal += 1
             if (
-                self.isPossibleToMove(self.currentState, State(*node))
-                and not self.discovered[node[0]][node[1]]
+                state.row - pathGoal[idx + 1].row != 0
+                and state.col - pathGoal[idx + 1].col != 0
             ):
-                direction = possibility
-                self.backtrack.append(direction)
-                break
+                costGoal += 0.5
 
-        if direction is None:
-            direction = reverse[self.backtrack.pop()]
+        pathToGo = pathGoal if costVictim >= tl - 0.5 or costGoal >= tl - 0.5 else pathVictim
+        if len(pathToGo) == 1:
+            return "nop", self.currentState
 
-        self.previousState = State(
-            self.currentState.row + movePos[direction][0],
-            self.currentState.col + movePos[direction][1],
+        if len(pathToGo) == 2 and self.currentVictim:
+            self.currentVictim.type = NodeType.SAVED
+            print(
+                    "vitima salva em ",
+                    self.currentState,
+                    " id: ",
+                    self.currentVictim.victimId,
+                    " nível de gravidade: ",
+                    self.currentVictim.gravityLevel,
+                )
+
+        pathToGo.reverse()
+        pathToGo.pop()
+
+        nextState = pathToGo.pop()
+        delta = (
+            nextState.row - self.currentState.row,
+            nextState.col - self.currentState.col,
         )
 
-        return direction, self.previousState
+        codeRow = {0: "", 1: "S", -1: "N"}
+        codeCol = {0: "", 1: "L", -1: "O"}
+
+        direction = f"{codeRow[delta[0]]}{codeCol[delta[1]]}"
+        if len(direction) == 2:
+            direction = direction.replace("L", "E")
+
+        return direction, nextState
 
     def do(self):
         """

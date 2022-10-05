@@ -5,8 +5,6 @@
 import sys
 import os
 
-from enum import IntEnum
-
 ## Importa Classes necessarias para o funcionamento
 from model import Model
 from problem import Problem
@@ -19,17 +17,14 @@ from explorerPlan import ExplorerPlan
 ##Importa o Planner
 sys.path.append(os.path.join("pkg", "planner"))
 from planner import Planner
+from node import Node, NodeType
 
-
-class NodeType(IntEnum):
-    UNKNOWN = 0
-    OBSTACLE = 1
-    EMPTY = 2
-    VICTIM = 3
-
-class Node:
-    def __init__(self, type: NodeType):
-        self.type = type
+GRAVITY_LEVEL = {
+    1: [0.0, 25.0],
+    2: [25.0, 50.0],
+    3: [50.0, 75.0],
+    4: [75.0, 100.0]
+}
 
 ## Classe que define o Agente
 class AgentExplorer:
@@ -42,7 +37,7 @@ class AgentExplorer:
         self.model = model
 
         self.map = [
-            [Node(NodeType.UNKNOWN) for j in range(self.model.columns)]
+            [Node(NodeType.UNKNOWN, i, j) for j in range(self.model.columns)]
             for i in range(self.model.rows)
         ]
 
@@ -131,10 +126,12 @@ class AgentExplorer:
 
             victimId = self.victimPresenceSensor()
             if victimId > 0:
+                gravity = self.victimVitalSignalsSensor(victimId)[0][6]
                 self.map[self.currentState.row][self.currentState.col].type = NodeType.VICTIM
                 self.map[self.currentState.row][
                     self.currentState.col
-                ].vitalSignals = self.victimVitalSignalsSensor(victimId)
+                ].gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
+                self.map[self.currentState.row][self.currentState.col].victimId = victimId
                 print(
                     "vitima encontrada em ",
                     self.currentState,

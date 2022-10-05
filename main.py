@@ -5,8 +5,9 @@ import time
 ## Importa as classes que serao usadas
 sys.path.append(os.path.join("pkg"))
 from model import Model
-from agentExplorer import AgentExplorer, NodeType
-# from agentRescuer import AgentRescuer
+from node import NodeType
+from agentExplorer import AgentExplorer
+from agentRescuer import AgentRescuer
 
 
 ## Metodo utilizado para permitir que o usuario construa o labirindo clicando em cima
@@ -61,28 +62,26 @@ def main():
     explorer.deliberate()
     while explorer.deliberate() != -1:
         model.draw()
-        time.sleep(0.01)
+        # time.sleep(0.01)
     model.draw()
 
     for i in range(0, model.rows):
         for j in range(0, model.columns):
-            print(f"*{explorer.map[i][j].vitalSignals if explorer.map[i][j].type == NodeType.VICTIM else None}*")
-            # if explorer.map[i][j] == NodeType.VICTIM:
-            #     print(f"*{explorer.map[i][j].vitalSignals[0][5]}*", end=" ")
-            # else:
-        #     print(int(explorer.map[i][j]), end="   ")
-        # print()
+            if explorer.map[i][j].type == NodeType.VICTIM:
+                print(f"*{explorer.map[i][j].gravityLevel}*", end=" ")
+            else:
+                print(int(explorer.map[i][j].type), end="   ")
+        print()
 
+    # Cria um agente socorrista
+    rescuer = AgentRescuer(model, configDict, explorer.map)
 
-    # # Cria um agente socorrista
-    # rescuer = AgentRescuer(model, configDict, explorer.map)
-
-    # ## Ciclo de raciocínio do agente
-    # rescuer.deliberate()
-    # while rescuer.deliberate() != -1:
-    #     model.draw()
-    #     time.sleep(0.0001)
-    # model.draw()
+    ## Ciclo de raciocínio do agente
+    rescuer.deliberate()
+    while rescuer.deliberate() != -1:
+        model.draw()
+        # time.sleep(0.1)
+    model.draw()
 
 
 if __name__ == "__main__":

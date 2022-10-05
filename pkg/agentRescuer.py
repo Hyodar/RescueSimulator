@@ -9,6 +9,7 @@ from enum import IntEnum
 
 ## Importa Classes necessarias para o funcionamento
 from model import Model
+from node import NodeType
 from problem import Problem
 from state import State
 from random import randint
@@ -19,13 +20,6 @@ from rescuerPlan import RescuerPlan
 ##Importa o Planner
 sys.path.append(os.path.join("pkg", "planner"))
 from planner import Planner
-
-
-class NodeType(IntEnum):
-    UNKNOWN = 0
-    OBSTACLE = 1
-    EMPTY = 2
-    VICTIM = 3
 
 
 ## Classe que define o Agente
@@ -116,27 +110,12 @@ class AgentRescuer:
         self.tl -= self.prob.getActionCost(self.previousAction)
         print("Tempo disponivel: ", self.tl)
 
-        if self.prob.goalTest(self.currentState) and self.tl <= 0.5:
+        if (
+            self.prob.goalTest(self.currentState) and (self.tl <= 0.5
+            or len([node for nodes in self.map for node in nodes if node.type == NodeType.VICTIM]) == 0)
+        ):
             print("!!! Objetivo atingido !!!")
             del self.libPlan[0]
-
-        if self.map[self.currentState.row][self.currentState.col] == NodeType.UNKNOWN:
-            self.map[self.currentState.row][self.currentState.col] = NodeType.EMPTY
-
-            victimId = self.victimPresenceSensor()
-            if victimId > 0:
-                self.map[self.currentState.row][self.currentState.col] = NodeType.VICTIM
-                self.map[self.currentState.row][
-                    self.currentState.col
-                ].vitalSignals = self.victimVitalSignalsSensor(victimId)
-                print(
-                    "vitima encontrada em ",
-                    self.currentState,
-                    " id: ",
-                    victimId,
-                    " sinais vitais: ",
-                    self.victimVitalSignalsSensor(victimId),
-                )
 
         result = self.plan.chooseAction(self.tl)
         print(
@@ -150,9 +129,6 @@ class AgentRescuer:
         self.executeGo(result[0])
         self.previousAction = result[0]
         self.expectedState = result[1]
-
-        if self.expectedState != self.positionSensor():
-            self.map[self.expectedState.row][self.expectedState.col] = NodeType.OBSTACLE
 
         # for mapLine in self.map:
         #     print(list(map(int, mapLine)))
