@@ -5,7 +5,8 @@ import time
 ## Importa as classes que serao usadas
 sys.path.append(os.path.join("pkg"))
 from model import Model
-from agentExplorer import AgentExplorer
+from agentExplorer import AgentExplorer, NodeType
+# from agentRescuer import AgentRescuer
 
 
 ## Metodo utilizado para permitir que o usuario construa o labirindo clicando em cima
@@ -54,15 +55,35 @@ def main():
     model.setGoalPos(model.maze.board.posGoal[0], model.maze.board.posGoal[1])
     model.draw()
 
-    # Cria um agente
-    agent = AgentExplorer(model, configDict)
+    # Cria um agente explorador
+    explorer = AgentExplorer(model, configDict)
 
     ## Ciclo de raciocínio do agente
-    agent.deliberate()
-    while agent.deliberate() != -1:
+    explorer.deliberate()
+    while explorer.deliberate() != -1:
         model.draw()
         time.sleep(0.01)
     model.draw()
+
+    for i in range(0, model.rows):
+        for j in range(0, model.columns):
+            print(f"*{explorer.map[i][j].vitalSignals if explorer.map[i][j].type == NodeType.VICTIM else None}*")
+            # if explorer.map[i][j] == NodeType.VICTIM:
+            #     print(f"*{explorer.map[i][j].vitalSignals[0][5]}*", end=" ")
+            # else:
+        #     print(int(explorer.map[i][j]), end="   ")
+        # print()
+
+
+    # # Cria um agente socorrista
+    # rescuer = AgentRescuer(model, configDict, explorer.map)
+
+    # ## Ciclo de raciocínio do agente
+    # rescuer.deliberate()
+    # while rescuer.deliberate() != -1:
+    #     model.draw()
+    #     time.sleep(0.0001)
+    # model.draw()
 
 
 if __name__ == "__main__":

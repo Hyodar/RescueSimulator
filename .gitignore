@@ -362,5 +362,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# VSCode/IDE stuff
+.vscode
+
 # Custom entries
 *_rescuer.txt
