@@ -149,12 +149,15 @@ class AgentExplorer:
 
             victimId = self.victimPresenceSensor()
             if victimId > 0:
-                gravity = self.victimVitalSignalsSensor(victimId)[5]
-                self.map[self.currentState.row][self.currentState.col].type = NodeType.VICTIM
-                self.map[self.currentState.row][
-                    self.currentState.col
-                ].gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
-                self.map[self.currentState.row][self.currentState.col].victimId = victimId
+                vitalSignals = self.victimVitalSignalsSensor(victimId)
+                gravity = vitalSignals[5]
+
+                node = self.map[self.currentState.row][self.currentState.col]
+
+                node.type = NodeType.VICTIM
+                node.gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
+                node.vitalSignals = vitalSignals
+                node.victimId = victimId
                 print(
                     "vitima encontrada em ",
                     self.currentState,
