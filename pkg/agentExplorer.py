@@ -155,6 +155,9 @@ class AgentExplorer:
                     self.currentState.col
                 ].gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
                 self.map[self.currentState.row][self.currentState.col].victimId = victimId
+                self.map[self.currentState.row][
+                    self.currentState.col
+                ].vitalSignals = self.victimVitalSignalsSensor(victimId)
                 print(
                     "vitima encontrada em ",
                     self.currentState,

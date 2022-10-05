@@ -177,6 +177,7 @@ class ExplorerPlan:
 
         if cost >= tl - 0.5:
             if len(path) == 1:
+                if self.currentState == self.goalPos: self.finished = True
                 return "nop", self.currentState
 
             path.reverse()
