@@ -367,3 +367,5 @@ FodyWeavers.xsd
 
 # Custom entries
 *_rescuer.txt
+explorer.log
+rescuer.log
