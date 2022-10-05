@@ -1,4 +1,3 @@
-from random import randint
 from state import State
 
 possibilities = ["N", "S", "L", "O", "NE", "NO", "SE", "SO"]
