@@ -42,6 +42,7 @@ class ExplorerPlan:
         self.backtrack = []
         self.discovered = [[False for j in range(maxColumns)] for i in range(maxRows)]
         self.finished = False
+        self.tl = 0
 
     def updateCurrentState(self, state):
         self.currentState = state
@@ -164,6 +165,10 @@ class ExplorerPlan:
         Eh a acao que vai ser executada pelo agente.
         @return: tupla contendo a acao (direcao) e uma instância da classe State que representa a posição esperada após a execução
         """
+
+        if self.currentState == State(0, 0) and tl <= 0.5:
+            self.finished = True
+            return "nop", self.currentState
 
         path = self.aStar(self.goalPos)
         cost = 0
