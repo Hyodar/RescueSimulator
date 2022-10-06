@@ -46,7 +46,7 @@ class AgentRescuer:
         for i in range(self.model.rows):
             for j in range(self.model.columns):
                 node = self.map[i][j]
-                
+
                 if (i, j) in configDict["Vitimas"]:
                     victimId = configDict["Vitimas"].index((i, j)) + 1
                     gravity = self.model.maze.vitalSignals[victimId - 1][5]
@@ -137,7 +137,7 @@ class AgentRescuer:
         print("Tempo disponivel: ", self.tl)
 
         if (
-            self.prob.goalTest(self.currentState) and (self.tl <= 0.5
+            self.prob.goalTest(self.currentState) and (self.tl <= 0.5 or self.plan.goalTest()
             or len([node for nodes in self.map for node in nodes if node.type == NodeType.VICTIM]) == 0)
         ):
             print("!!! Objetivo atingido !!!")

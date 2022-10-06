@@ -223,6 +223,7 @@ class RescuerPlan:
         ]
 
         self.currentVictim = None
+        self.finished = False
 
         print(self.victims)
         self.victims.sort(key= lambda victim: np.sqrt((victim.state.row - initialState.row)**2 + (victim.state.col - initialState.col)**2))
@@ -241,6 +242,9 @@ class RescuerPlan:
 
     def updateCurrentState(self, state):
         self.currentState = state
+
+    def goalTest(self):
+        return self.finished
 
     def isPossibleToMove(self, fromState, toState):
         """Verifica se eh possivel ir da posicao atual para o estado (lin, col) considerando
@@ -352,9 +356,10 @@ class RescuerPlan:
 
         self.currentVictim = next((v for v in self.victims if v.type == NodeType.VICTIM), None)
         pathVictim = self.aStar(self.currentState, self.currentVictim.state if self.currentVictim else self.goalPos)
-        pathGoal = self.aStar(pathVictim[-1], self.goalPos)
+        pathGoal = self.aStar(self.currentState, self.goalPos)
+        pathPostVictim = self.aStar(pathVictim[-1], self.goalPos)
         costVictim = 0
-        costGoal = 0
+
         for (idx, state) in enumerate(pathVictim[0:-1]):
             costVictim += 1
             if (
@@ -363,15 +368,22 @@ class RescuerPlan:
             ):
                 costVictim += 0.5
 
-        for (idx, state) in enumerate(pathGoal[0:-1]):
-            costGoal += 1
-            if (
-                state.row - pathGoal[idx + 1].row != 0
-                and state.col - pathGoal[idx + 1].col != 0
-            ):
-                costGoal += 0.5
+        costPostVictim = costVictim
 
-        pathToGo = pathGoal if costVictim >= tl - 0.5 or costGoal >= tl - 0.5 else pathVictim
+        for (idx, state) in enumerate(pathPostVictim[0:-1]):
+            costPostVictim += 1
+            if (
+                state.row - pathPostVictim[idx + 1].row != 0
+                and state.col - pathPostVictim[idx + 1].col != 0
+            ):
+                costPostVictim += 0.5
+
+        if costVictim >= tl - 0.5 or costPostVictim >= tl - 0.5:
+            pathToGo = pathGoal
+            self.finished = True
+        else:
+            pathToGo = pathVictim
+
         if len(pathToGo) == 1:
             return "nop", self.currentState
 
