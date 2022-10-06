@@ -96,7 +96,7 @@ class AgentRescuer:
 
         ## Cria a instancia do plano para se movimentar aleatoriamente no labirinto (sem nenhuma acao)
         self.plan = RescuerPlan(
-            model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
+            self.tl, model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
         )
 
         ## Adiciona o(s) planos a biblioteca de planos do agente
