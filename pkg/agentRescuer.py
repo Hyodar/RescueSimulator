@@ -170,6 +170,9 @@ class AgentRescuer:
             )
             print(f"vsg = {vsg}")
 
+        if self.map[self.currentState.row][self.currentState.col].type == NodeType.VICTIM:
+            self.map[self.currentState.row][self.currentState.col].type =  NodeType.SAVED
+
         if self.map[self.currentState.row][self.currentState.col].type == NodeType.SAVED:
             self.model.maze.board.listPlaces[self.currentState.row][self.currentState.col].victim = False
             self.model.maze.board.listPlaces[self.currentState.row][self.currentState.col].saved = True

@@ -64,7 +64,7 @@ def main():
         explorer.deliberate()
         while explorer.deliberate() != -1:
             model.draw()
-            time.sleep(0.001)
+            # time.sleep(0.001)
         model.draw()
     else:
         model.maze.board.setAgentColor((0, 0, 255))
@@ -75,7 +75,7 @@ def main():
         rescuer.deliberate()
         while rescuer.deliberate() != -1:
             model.draw()
-            time.sleep(0.001)
+            # time.sleep(0.001)
         model.draw()
 
 
