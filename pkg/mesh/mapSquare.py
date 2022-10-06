@@ -19,6 +19,7 @@ class MapSquare:
         self.screen = screen
         self.sideSquare = sideSquare
         self.posBegin = posBegin
+        self.agentColor = (0, 255, 0)
 
         ## Lista de quadrados
         self.listPlaces = []
@@ -34,6 +35,11 @@ class MapSquare:
 
         ## Chama o metodo para gerar a malha
         self.generateMap()
+
+    def setAgentColor(self, agentColor):
+        for row in self.listPlaces:
+            for col in row:
+                col.agentColor = agentColor
 
     ## Metodo que gera a malha de triangulos
     def generateMap(self):
@@ -77,7 +83,7 @@ class MapSquare:
                         ## Define que naquela posicao vai ter determinado objeto
                         self.listPlaces[int(pos[0])][int(pos[1])].itemInside = i
                         ## Atualiza a cor do lugar
-                        self.listPlaces[int(pos[0])][int(pos[1])].updateColor()
+                        self.listPlaces[int(pos[0])][int(pos[1])].updateColor(self.agentColor)
 
             ## Seta as posicoes do robo e do objetivo
             if "Base" in things:

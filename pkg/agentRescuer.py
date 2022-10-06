@@ -3,9 +3,6 @@
 ### (TODO: mudar isso) Agente que fixa um objetivo aleatório e anda aleatoriamente pelo labirinto até encontrá-lo.
 ### Executa raciocíni on-line: percebe --> [delibera] --> executa ação --> percebe --> ...
 import sys
-import os
-
-from enum import IntEnum
 
 ## Importa Classes necessarias para o funcionamento
 from model import Model
@@ -16,10 +13,7 @@ from random import randint
 
 ## Importa o algoritmo para o plano
 from rescuerPlan import RescuerPlan
-
-##Importa o Planner
-sys.path.append(os.path.join("pkg", "planner"))
-from planner import Planner
+from rescuerPlanAStar import RescuerPlanAStar
 
 GRAVITY_LEVEL = {
     1: [0.0, 25.0],
@@ -94,11 +88,14 @@ class AgentRescuer:
         ## Custo da solução
         self.costAll = 0
 
-        ## Cria a instancia do plano para se movimentar aleatoriamente no labirinto (sem nenhuma acao)
-        self.plan = RescuerPlan(
-            self.tl, model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
-        )
-
+        if sys.argv[1] == "rescuerGA":
+            self.plan = RescuerPlan(
+                self.tl, model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
+            )
+        else:
+            self.plan = RescuerPlanAStar(
+                model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
+            )
         ## Adiciona o(s) planos a biblioteca de planos do agente
         self.libPlan = [self.plan]
 
@@ -142,6 +139,40 @@ class AgentRescuer:
         ):
             print("!!! Objetivo atingido !!!")
             del self.libPlan[0]
+
+            victims = [v for k in self.map for v in k if v.type == NodeType.VICTIM or v.type == NodeType.SAVED]
+            saved = [s for k in self.map for s in k if s.type == NodeType.SAVED]
+
+            totalGravities = [0, 0, 0, 0]
+            for v in victims:
+                totalGravities[v.gravityLevel - 1] += 1
+
+            savedGravities = [0, 0, 0, 0]
+            for s in saved:
+                savedGravities[s.gravityLevel - 1] += 1
+
+            vsg = sum(
+                (
+                    gravity * (4 - idx)
+                    for (idx, gravity) in enumerate(savedGravities)
+                )
+            ) / sum(
+                (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
+            )
+
+            print("Estatísticas:")
+            print("------------------------------")
+            print(
+                f"pvs = {len(saved)}/{len(victims)} = {len(saved) / len(victims)}"
+            )
+            print(
+                f"tvs = {self.costAll}/{len(saved)} = {self.costAll / len(saved)}"
+            )
+            print(f"vsg = {vsg}")
+
+        if self.map[self.currentState.row][self.currentState.col].type == NodeType.SAVED:
+            self.model.maze.board.listPlaces[self.currentState.row][self.currentState.col].victim = False
+            self.model.maze.board.listPlaces[self.currentState.row][self.currentState.col].saved = True
 
         result = self.plan.chooseAction(self.tl)
         print(

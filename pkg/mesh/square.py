@@ -23,6 +23,8 @@ class Square:
         self.agent = False
         self.goal = False
         self.victim = False
+        self.saved = False
+        self.agentColor = (0, 255, 0)
 
         ## Variaveis usadas para definir se um objeto é acionavel
         self.actionable = False
@@ -48,7 +50,7 @@ class Square:
         elif self.agent == True:
             pygame.draw.rect(
                 self.screen,
-                (0, 255, 0),
+                self.agentColor,
                 (self.ref[0], self.ref[1], self.side, self.side),
             )
         elif self.color != False:
@@ -73,6 +75,12 @@ class Square:
             pygame.draw.rect(
                 self.screen,
                 (240, 0, 0),
+                (self.ref[0], self.ref[1], self.side, self.side),
+            )
+        elif self.saved == True:
+            pygame.draw.rect(
+                self.screen,
+                (130, 200, 225),
                 (self.ref[0], self.ref[1], self.side, self.side),
             )
         else:
@@ -120,7 +128,7 @@ class Square:
         return False
 
     ## Metodo que atualiza a cor do bloco de acordo com o item
-    def updateColor(self):
+    def updateColor(self, agentColor = (0, 255, 0)):
         if self.itemInside == "Parede":
             self.color = (139, 69, 19)
         elif self.itemInside == "Cone":
@@ -132,10 +140,13 @@ class Square:
             self.actionable = True
         elif self.itemInside == "Agente":
             self.agent = True
+            self.agentColor = agentColor
         elif self.itemInside == "Objetivo":
             self.goal = True
         elif self.itemInside == "Vitima" or self.itemInside == "Vitimas":
             self.victim = True
+        elif self.itemInside == "Salvo":
+            self.saved = True
         else:
             self.color = False
 

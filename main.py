@@ -64,9 +64,10 @@ def main():
         explorer.deliberate()
         while explorer.deliberate() != -1:
             model.draw()
-            # time.sleep(0.01)
+            time.sleep(0.001)
         model.draw()
     else:
+        model.maze.board.setAgentColor((0, 0, 255))
         # Cria um agente socorrista
         rescuer = AgentRescuer(model, configDict)
 
@@ -74,7 +75,7 @@ def main():
         rescuer.deliberate()
         while rescuer.deliberate() != -1:
             model.draw()
-            # time.sleep(0.1)
+            time.sleep(0.001)
         model.draw()
 
 

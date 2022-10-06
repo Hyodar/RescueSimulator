@@ -1,6 +1,3 @@
-import numpy as np
-import random
-
 from state import State
 from node import NodeType
 
@@ -15,188 +12,21 @@ movePos = {
     "SE": (1, 1),
     "SO": (1, -1),
 }
-GRAVITY_LEVEL = {
-    1: [0.0, 25.0],
-    2: [25.0, 50.0],
-    3: [50.0, 75.0],
-    4: [75.0, 100.0]
+reverse = {
+    "N": "S",
+    "S": "N",
+    "L": "O",
+    "O": "L",
+    "NE": "SO",
+    "NO": "SE",
+    "SE": "NO",
+    "SO": "NE",
 }
 
-class Population():
-    def __init__(self, plan, base, bag, vitalSignals, vsgDenominator):
-        self.bag = bag
-        self.parents = []
-        self.score = 0
-        self.best = None
-        self.base = base
-        self.vitalSignals = vitalSignals
-        self.vsgDenominator = vsgDenominator
-        self.plan = plan
 
-    @staticmethod
-    def fromNodes(plan, victimNodes, base, populationCount, vsgDenominator):
-        victimStates = list(map(lambda el: el.state, victimNodes))
-        vitalSignals = {}
-
-        for node in victimNodes:
-            vitalSignals[node.state] = node.gravityLevel
-
-        return Population(
-            plan,
-            base,
-            [np.random.permutation(victimStates) for _ in range(populationCount)],
-            vitalSignals,
-            vsgDenominator
-        )
-
-    def getSaved(self, chromosome, tl):
-        saved = []
-
-        for (idx, _) in enumerate(chromosome[0:-1]):
-            pathToNext = self.plan.aStar(chromosome[idx], chromosome[idx + 1])
-            pathBackToBase = self.plan.aStar(chromosome[idx + 1], self.base)
-
-            cost = pathCost(pathToNext) + pathCost(pathBackToBase)
-
-            if pathCost(pathToNext) + pathCost(pathBackToBase) <= tl:
-                saved.append(chromosome[idx + 1])
-                tl -= cost
-            else:
-                break
-
-        return saved
-
-    def fitness(self, chromosome, tl):
-        return 1 - self.computeVsg(self.getSaved(chromosome, tl)[1:])
-
-    def computeVsg(self, saved):
-        gravities = [0, 0, 0, 0]
-        for victim in saved:
-            gravities[self.vitalSignals[victim] - 1] += 1
-
-        return sum(
-            (gravity * (4 - idx) for (idx, gravity) in enumerate(gravities))
-        ) / self.vsgDenominator
-
-    def evaluate(self, tl):
-        scores = np.asarray(
-            [self.fitness(chromosome, tl) for chromosome in self.bag]
-        )
-        self.score = np.min(scores)
-        self.best = self.bag[scores.tolist().index(self.score)]
-        self.parents.append(self.best)
-
-        if False in (scores[0] == scores):
-            scores = np.max(scores) - scores
-
-        return scores / np.sum(scores)
-
-    def select(self, tl, k=4):
-        fit = self.evaluate(tl)
-        while len(self.parents) < k:
-            idx = np.random.randint(0, len(fit))
-            if fit[idx] > np.random.rand():
-                self.parents.append(self.bag[idx])
-
-    def swapMutation(self, chromosome):
-        a, b = np.random.choice(len(chromosome), 2)
-
-        chromosome[a], chromosome[b] = chromosome[b], chromosome[a]
-
-        return chromosome
-
-    def crossoverMutation(self, pCross=0.1):
-        children = []
-        count = len(self.parents)
-        size = len(self.parents[0])
-
-        for _ in range(len(self.bag)):
-            if np.random.rand() < pCross:
-                children.append(
-                    list(self.parents[np.random.randint(count, size=1)[0]])
-                )
-            else:
-                parent1, parent2 = random.choices(self.parents, k=2)
-
-                idx = np.random.choice(range(size), size=2, replace=False)
-                start, end = min(idx), max(idx)
-
-                child = [None for _ in range(size)]
-                for i in range(start, end + 1):
-                    child[i] = parent1[i]
-
-                pointer = 0
-
-                for i in range(size):
-                    if child[i] is None:
-                        while parent2[pointer] in child:
-                            pointer += 1
-                        child[i] = parent2[pointer]
-
-                children.append(child)
-
-        return children
-
-    def mutate(self, pCross=0.1, pMut=0.1):
-        nextBag = []
-        children = self.crossoverMutation(pCross)
-
-        for child in children:
-            if np.random.rand() < pMut:
-                nextBag.append(self.swapMutation(child))
-            else:
-                nextBag.append(child)
-
-        return nextBag
-
-def pathCost(path):
-    cost = 0
-    for (idx, state) in enumerate(path[0:-1]):
-        cost += 1
-        if (
-            state.row - path[idx + 1].row != 0
-            and state.col - path[idx + 1].col != 0
-        ):
-            cost += 0.5
-    return cost
-
-
-def geneticAlgorithm(plan, victimNodes, base, maxTime, vsgDenominator, populationCount=10, iterations=10, selectivity=0.2, pCross=0.2, pMut=0.7, printInterval=100, returnHistory=False, verbose=False):
-    population = Population.fromNodes(plan, victimNodes, base, populationCount, vsgDenominator)
-    best = population.best
-    print(best)
-    score = 0
-    history = []
-
-    victimStates = list(map(lambda el: el.state, victimNodes))
-    vitalSignals = {}
-
-    for node in victimNodes:
-        vitalSignals[node.state] = node.gravityLevel
-
-    for i in range(iterations):
-        population.select(maxTime, populationCount * selectivity)
-        history.append(population.score)
-
-        if verbose or i % printInterval == 0:
-            print(f"Generation {i}: {population.score}")
-
-        if population.score < score:
-            best = population.best
-            score = population.score
-            print(best, score)
-
-        children = population.mutate(pCross, pMut)
-        population = Population(plan, base, children, vitalSignals, vsgDenominator)
-
-    if returnHistory:
-        return best, history
-    else:
-        return best
-
-class RescuerPlan:
+class RescuerPlanAStar:
     def __init__(
-        self, tl, maxRows, maxColumns, goal, initialState, discoveredMap: list, name="none", mesh="square"
+        self, maxRows, maxColumns, goal, initialState, discoveredMap: list, name="none", mesh="square"
     ):
         """
         Define as variaveis necessárias para a utilização do rescuer plan por um unico agente.
@@ -213,7 +43,6 @@ class RescuerPlan:
         self.goalPos = goal
         self.actions = []
         self.previousState = initialState
-        self.tl = tl
 
         self.backtrack = []
         self.map = discoveredMap
@@ -222,21 +51,12 @@ class RescuerPlan:
                 if discoveredMap[row][col].type == NodeType.VICTIM
         ]
 
+        self.victims.sort(key=lambda v: v.gravityLevel)
+
         self.currentVictim = None
         self.finished = False
 
-        self.victims.sort(key= lambda victim: np.sqrt((victim.state.row - initialState.row)**2 + (victim.state.col - initialState.col)**2))
-
-        totalGravities = [0, 0, 0, 0]
-        for i in range(self.maxRows):
-            for j in range(self.maxColumns):
-                if self.map[i][j].type == NodeType.VICTIM:
-                    totalGravities[self.map[i][j].gravityLevel - 1] += 1
-        self.vsgDenominator = sum(
-            (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
-        )
-
-        print(geneticAlgorithm(self, self.victims, self.initialState, self.tl, self.vsgDenominator, printInterval=1))
+        self.counter = 0
 
     def updateCurrentState(self, state):
         self.currentState = state
@@ -314,6 +134,7 @@ class RescuerPlan:
                     n = v
 
             if n == None:
+                print("Path does not exist")
                 return None
 
             if n == target:
@@ -325,6 +146,9 @@ class RescuerPlan:
                 reconstructedPath.append(initial)
                 reconstructedPath.reverse()
 
+                print(
+                    f"Path found: {list(map(lambda a: (a.row, a.col), reconstructedPath))}"
+                )
                 return reconstructedPath
 
             for (m, weight) in getNeighbors(n):
@@ -344,6 +168,7 @@ class RescuerPlan:
             openList.remove(n)
             closedList.add(n)
 
+        print("Path does not exist")
         return None
 
     def chooseAction(self, tl):
