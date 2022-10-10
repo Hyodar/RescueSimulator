@@ -2,6 +2,7 @@
 ### @Author: Franco Barp Gomer e Gustabvo Brunholi Chierici (UTFPR)
 ### (TODO: mudar isso) Agente que fixa um objetivo aleatório e anda aleatoriamente pelo labirinto até encontrá-lo.
 ### Executa raciocíni on-line: percebe --> [delibera] --> executa ação --> percebe --> ...
+import os
 import sys
 
 ## Importa Classes necessarias para o funcionamento
@@ -140,12 +141,21 @@ class AgentRescuer:
             print("!!! Objetivo atingido !!!")
             del self.libPlan[0]
 
-            victims = [v for k in self.map for v in k if v.type == NodeType.VICTIM or v.type == NodeType.SAVED]
-            saved = [s for k in self.map for s in k if s.type == NodeType.SAVED]
+            filename = "sinaisvitais.txt"
+            vs_file = open(os.path.join("config_data", filename), "r")
 
+            victims = 0
             totalGravities = [0, 0, 0, 0]
-            for v in victims:
-                totalGravities[v.gravityLevel - 1] += 1
+
+            for line in vs_file:
+                values = line.split(",")
+                gravity = float(values[6])
+                victims += 1
+                print(gravity)
+                totalGravities[[k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0] - 1] += 1
+
+            print(totalGravities)
+            saved = [s for k in self.map for s in k if s.type == NodeType.SAVED]
 
             savedGravities = [0, 0, 0, 0]
             for s in saved:
@@ -163,7 +173,7 @@ class AgentRescuer:
             print("Estatísticas:")
             print("------------------------------")
             print(
-                f"pvs = {len(saved)}/{len(victims)} = {len(saved) / len(victims)}"
+                f"pvs = {len(saved)}/{victims} = {len(saved) / victims}"
             )
             print(
                 f"tvs = {self.costAll}/{len(saved)} = {self.costAll / len(saved)}"

@@ -53,6 +53,30 @@ class RescuerPlanAStar:
 
         self.victims.sort(key=lambda v: v.gravityLevel)
 
+        self.distances = {
+            victim.state: {
+                victim2.state: pathCost(self.aStar(victim.state, victim2.state)) for victim2 in self.victims
+            } for victim in self.victims
+        }
+
+        tmpVictims = []
+
+        tmp = {}
+
+        for victim in self.victims:
+            if tmp.get(victim.state, False) == False:
+                tmpVictims.append(victim)
+                tmp[victim.state] = True
+
+            for victim2 in self.victims:
+                distance = self.distances[victim.state][victim2.state]
+
+                if distance < 2 and tmp.get(victim2.state, False) == False:
+                    tmpVictims.append(victim2)
+                    tmp[victim2.state] = True
+
+        self.victims = tmpVictims
+
         self.currentVictim = None
         self.finished = False
 
@@ -134,7 +158,6 @@ class RescuerPlanAStar:
                     n = v
 
             if n == None:
-                print("Path does not exist")
                 return None
 
             if n == target:
@@ -146,9 +169,9 @@ class RescuerPlanAStar:
                 reconstructedPath.append(initial)
                 reconstructedPath.reverse()
 
-                print(
-                    f"Path found: {list(map(lambda a: (a.row, a.col), reconstructedPath))}"
-                )
+                # print(
+                #     f"Path found: {list(map(lambda a: (a.row, a.col), reconstructedPath))}"
+                # )
                 return reconstructedPath
 
             for (m, weight) in getNeighbors(n):
@@ -168,7 +191,7 @@ class RescuerPlanAStar:
             openList.remove(n)
             closedList.add(n)
 
-        print("Path does not exist")
+        # print("Path does not exist")
         return None
 
     def chooseAction(self, tl):
@@ -248,3 +271,14 @@ class RescuerPlanAStar:
 
         nextMove = self.move()
         return (nextMove[1], self.goalPos == State(nextMove[0][0], nextMove[0][1]))
+
+def pathCost(path):
+    cost = 0
+    for (idx, state) in enumerate(path[0:-1]):
+        cost += 1
+        if (
+            state.row - path[idx + 1].row != 0
+            and state.col - path[idx + 1].col != 0
+        ):
+            cost += 0.5
+    return cost

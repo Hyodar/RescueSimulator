@@ -193,7 +193,7 @@ class AgentExplorer:
                 f"pve = {len(victims)}/{len(self.totalVictims)} = {len(victims) / len(self.totalVictims)}"
             )
             print(
-                f"tve = {self.totalTime - self.tl}/{len(victims)} = {self.tl / len(victims)}"
+                f"tve = {self.costAll}/{len(victims)} = {self.costAll / len(victims)}"
             )
             print(f"veg = {veg}")
 
@@ -279,6 +279,7 @@ class AgentExplorer:
         """Simula um sensor que realiza a leitura dos sinais da vitima
         @param o id da vítima
         @return a lista de sinais vitais (ou uma lista vazia se não tem vítima com o id)"""
+        self.costAll += 2
         self.tl -= 2
         return self.model.getVictimVitalSignals(victimId)
 
