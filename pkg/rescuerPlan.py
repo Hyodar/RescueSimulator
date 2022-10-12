@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import time
 
 from state import State
 from node import NodeType
@@ -89,7 +90,16 @@ class Population:
         if False in (scores[0] == scores):
             scores = np.max(scores) - scores
 
-        return scores / np.sum(scores)
+        scoresSum = np.sum(scores)
+
+        for i in range(scores.shape[0]):
+            scores[i] = (
+                scores[i] / scoresSum
+                if not (scores[i] == 0 and scoresSum == 0)
+                else float("inf")
+            )
+
+        return scores
 
     def select(self, tl, k=4):
         fit = self.evaluate(tl)
@@ -164,21 +174,19 @@ def geneticAlgorithm(
     maxTime,
     vsgDenominator,
     populationCount=20,
-    iterations=100,
+    stagnation=3,
     selectivity=0.2,
     pCross=0.4,
     pMut=0.7,
     printInterval=100,
-    returnHistory=False,
     verbose=False,
 ):
     population = Population.fromNodes(
         plan, victimNodes, base, populationCount, vsgDenominator
     )
     best = population.best
-    print(best)
-    score = 0
-    history = []
+    score = float("inf")
+    stagnationCounter = 0
 
     victimStates = list(map(lambda el: el.state, victimNodes))
     vitalSignals = {}
@@ -186,25 +194,31 @@ def geneticAlgorithm(
     for node in victimNodes:
         vitalSignals[node.state] = node.gravityLevel
 
-    for i in range(iterations):
+    generation = 0
+    while True:
         population.select(maxTime, populationCount * selectivity)
-        history.append(population.score)
 
-        if verbose or i % printInterval == 0:
-            print(f"Generation {i}: {population.score}")
+        if verbose or generation % printInterval == 0:
+            print(f"Generation {generation}: {population.score}")
 
         if population.score < score:
             best = population.best
             score = population.score
-            print(best, score)
+
+        if score == population.score:
+            stagnationCounter += 1
+        else:
+            stagnationCounter = 0
+
+        if stagnationCounter == stagnation or score == 0:
+            break
 
         children = population.mutate(pCross, pMut)
         population = Population(plan, base, children, vitalSignals, vsgDenominator)
 
-    if returnHistory:
-        return best, history
-    else:
-        return best
+        generation += 1
+
+    return list(best)
 
 
 class RescuerPlan:
@@ -259,16 +273,18 @@ class RescuerPlan:
             (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
         )
 
-        print(
-            geneticAlgorithm(
-                self,
-                self.victims,
-                self.initialState,
-                self.tl,
-                self.vsgDenominator,
-                printInterval=1,
-            )
+        self.victimPath = geneticAlgorithm(
+            self,
+            self.victims,
+            self.initialState,
+            self.tl,
+            self.vsgDenominator,
+            stagnation=5,
+            printInterval=1,
+            verbose=True,
         )
+
+        self.victimPath = [self.map[state.row][state.col] for state in self.victimPath]
 
     def updateCurrentState(self, state):
         self.currentState = state
@@ -382,41 +398,25 @@ class RescuerPlan:
         """
 
         self.currentVictim = next(
-            (v for v in self.victims if v.type == NodeType.VICTIM), None
+            (v for v in self.victimPath if v.type == NodeType.VICTIM), None
         )
-        pathVictim = self.aStar(
-            self.currentState,
-            self.currentVictim.state if self.currentVictim else self.goalPos,
-        )
+
         pathGoal = self.aStar(self.currentState, self.goalPos)
-        pathPostVictim = self.aStar(pathVictim[-1], self.goalPos)
-        costVictim = 0
+        pathCostGoal = pathCost(pathGoal)
+        pathToGo = pathGoal
 
-        for (idx, state) in enumerate(pathVictim[0:-1]):
-            costVictim += 1
-            if (
-                state.row - pathVictim[idx + 1].row != 0
-                and state.col - pathVictim[idx + 1].col != 0
-            ):
-                costVictim += 0.5
+        if not self.currentVictim is None:
+            pathVictim = self.aStar(self.currentState, self.currentVictim.state)
+            pathCostVictim = pathCost(pathVictim)
+            pathCostVictimReturn = pathCost(
+                self.aStar(self.currentVictim.state, self.goalPos)
+            )
 
-        costPostVictim = costVictim
-
-        for (idx, state) in enumerate(pathPostVictim[0:-1]):
-            costPostVictim += 1
-            if (
-                state.row - pathPostVictim[idx + 1].row != 0
-                and state.col - pathPostVictim[idx + 1].col != 0
-            ):
-                costPostVictim += 0.5
-
-        if costVictim >= tl - 0.5 or costPostVictim >= tl - 0.5:
-            pathToGo = pathGoal
-            self.finished = True
-        else:
-            pathToGo = pathVictim
+            if pathCostVictim + pathCostVictimReturn <= tl:
+                pathToGo = pathVictim
 
         if len(pathToGo) == 1:
+            self.finished = True
             return "nop", self.currentState
 
         if len(pathToGo) == 2 and self.currentVictim:
