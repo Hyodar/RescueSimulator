@@ -188,7 +188,6 @@ def geneticAlgorithm(
     score = float("inf")
     stagnationCounter = 0
 
-    victimStates = list(map(lambda el: el.state, victimNodes))
     vitalSignals = {}
 
     for node in victimNodes:
@@ -273,7 +272,7 @@ class RescuerPlan:
             (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
         )
 
-        self.victimPath = geneticAlgorithm(
+        path = geneticAlgorithm(
             self,
             self.victims,
             self.initialState,
@@ -284,7 +283,7 @@ class RescuerPlan:
             verbose=True,
         )
 
-        self.victimPath = [self.map[state.row][state.col] for state in self.victimPath]
+        self.victimPath = [self.map[state.row][state.col] for state in path]
 
     def updateCurrentState(self, state):
         self.currentState = state
