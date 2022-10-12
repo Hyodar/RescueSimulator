@@ -32,9 +32,7 @@ class RescuerPlanAStar:
         Define as variaveis necessárias para a utilização do rescuer plan por um unico agente.
         """
         self.walls = [
-            (row, col) for row,_ in enumerate(discoveredMap)
-                for col,_ in enumerate(discoveredMap[row])
-                    if discoveredMap[row][col].type == NodeType.OBSTACLE or discoveredMap[row][col].type == NodeType.UNKNOWN
+            [discoveredMap[i][j].type == NodeType.OBSTACLE for j in range(maxColumns)] for i in range(maxRows)
         ]
         self.maxRows = maxRows
         self.maxColumns = maxColumns
@@ -103,24 +101,21 @@ class RescuerPlanAStar:
         if len(self.walls) == 0:
             return True
 
-        if (toState.row, toState.col) in self.walls:
+        if self.walls[toState.row][toState.col]:
             return False
 
         delta_row = toState.row - fromState.row
         delta_col = toState.col - fromState.col
 
         if delta_row != 0 and delta_col != 0:
-            if (fromState.row + delta_row, fromState.col,) in self.walls and (
-                fromState.row,
-                fromState.col + delta_col,
-            ) in self.walls:
+            if self.walls[fromState.row + delta_row][fromState.col] and self.walls[fromState.row][fromState.col + delta_col]:
                 return False
 
         return True
 
     def aStar(self, initial, target):
         def heuristic(state):
-            return float("inf") if (state.row, state.col) in self.walls else 1
+            return 1
 
         def getNeighbors(state):
             resp = []

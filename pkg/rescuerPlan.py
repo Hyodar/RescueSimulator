@@ -50,24 +50,29 @@ class Population():
         )
 
     def getSaved(self, chromosome, tl):
+        costToNext = pathCost(self.plan.aStar(self.base, chromosome[0]))
         saved = []
 
+        if costToNext <= tl:
+            saved.append(chromosome[0])
+            tl -= costToNext
+        else:
+            return saved
+
         for (idx, _) in enumerate(chromosome[0:-1]):
-            pathToNext = self.plan.aStar(chromosome[idx], chromosome[idx + 1])
-            pathBackToBase = self.plan.aStar(chromosome[idx + 1], self.base)
+            costToNext = pathCost(self.plan.aStar(chromosome[idx], chromosome[idx + 1]))
+            costToBase = pathCost(self.plan.aStar(chromosome[idx + 1], self.base))
 
-            cost = pathCost(pathToNext) + pathCost(pathBackToBase)
-
-            if pathCost(pathToNext) + pathCost(pathBackToBase) <= tl:
+            if costToNext + costToBase <= tl:
                 saved.append(chromosome[idx + 1])
-                tl -= cost
+                tl -= costToNext
             else:
                 break
 
         return saved
 
     def fitness(self, chromosome, tl):
-        return 1 - self.computeVsg(self.getSaved(chromosome, tl)[1:])
+        return 1 - self.computeVsg(self.getSaved(chromosome, tl))
 
     def computeVsg(self, saved):
         gravities = [0, 0, 0, 0]
@@ -161,7 +166,7 @@ def pathCost(path):
     return cost
 
 
-def geneticAlgorithm(plan, victimNodes, base, maxTime, vsgDenominator, populationCount=10, iterations=10, selectivity=0.2, pCross=0.2, pMut=0.7, printInterval=100, returnHistory=False, verbose=False):
+def geneticAlgorithm(plan, victimNodes, base, maxTime, vsgDenominator, populationCount=20, iterations=100, selectivity=0.2, pCross=0.4, pMut=0.7, printInterval=100, returnHistory=False, verbose=False):
     population = Population.fromNodes(plan, victimNodes, base, populationCount, vsgDenominator)
     best = population.best
     print(best)
@@ -202,10 +207,9 @@ class RescuerPlan:
         Define as variaveis necessárias para a utilização do rescuer plan por um unico agente.
         """
         self.walls = [
-            (row, col) for row,_ in enumerate(discoveredMap)
-                for col,_ in enumerate(discoveredMap[row])
-                    if discoveredMap[row][col].type == NodeType.OBSTACLE or discoveredMap[row][col].type == NodeType.UNKNOWN
+            [discoveredMap[i][j].type == NodeType.OBSTACLE for j in range(maxColumns)] for i in range(maxRows)
         ]
+
         self.maxRows = maxRows
         self.maxColumns = maxColumns
         self.initialState = initialState
@@ -225,7 +229,7 @@ class RescuerPlan:
         self.currentVictim = None
         self.finished = False
 
-        self.victims.sort(key= lambda victim: np.sqrt((victim.state.row - initialState.row)**2 + (victim.state.col - initialState.col)**2))
+        self.victims.sort(key=lambda v: v.gravityLevel)
 
         totalGravities = [0, 0, 0, 0]
         for i in range(self.maxRows):
@@ -256,27 +260,21 @@ class RescuerPlan:
         if toState.col >= self.maxColumns or toState.row >= self.maxRows:
             return False
 
-        if len(self.walls) == 0:
-            return True
-
-        if (toState.row, toState.col) in self.walls:
+        if self.walls[toState.row][toState.col]:
             return False
 
         delta_row = toState.row - fromState.row
         delta_col = toState.col - fromState.col
 
         if delta_row != 0 and delta_col != 0:
-            if (fromState.row + delta_row, fromState.col,) in self.walls and (
-                fromState.row,
-                fromState.col + delta_col,
-            ) in self.walls:
+            if self.walls[fromState.row + delta_row][fromState.col] and self.walls[fromState.row][fromState.col + delta_col]:
                 return False
 
         return True
 
     def aStar(self, initial, target):
         def heuristic(state):
-            return float("inf") if (state.row, state.col) in self.walls else 1
+            return 1
 
         def getNeighbors(state):
             resp = []
