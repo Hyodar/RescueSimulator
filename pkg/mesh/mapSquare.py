@@ -83,7 +83,9 @@ class MapSquare:
                         ## Define que naquela posicao vai ter determinado objeto
                         self.listPlaces[int(pos[0])][int(pos[1])].itemInside = i
                         ## Atualiza a cor do lugar
-                        self.listPlaces[int(pos[0])][int(pos[1])].updateColor(self.agentColor)
+                        self.listPlaces[int(pos[0])][int(pos[1])].updateColor(
+                            self.agentColor
+                        )
 
             ## Seta as posicoes do robo e do objetivo
             if "Base" in things:

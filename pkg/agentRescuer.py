@@ -16,12 +16,7 @@ from random import randint
 from rescuerPlan import RescuerPlan
 from rescuerPlanAStar import RescuerPlanAStar
 
-GRAVITY_LEVEL = {
-    1: [0.0, 25.0],
-    2: [25.0, 50.0],
-    3: [50.0, 75.0],
-    4: [75.0, 100.0]
-}
+GRAVITY_LEVEL = {1: [0.0, 25.0], 2: [25.0, 50.0], 3: [50.0, 75.0], 4: [75.0, 100.0]}
 
 ## Classe que define o Agente
 class AgentRescuer:
@@ -48,7 +43,11 @@ class AgentRescuer:
 
                     node.type = NodeType.VICTIM
                     node.victimId = victimId
-                    node.gravityLevel = [k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0]
+                    node.gravityLevel = [
+                        k
+                        for k, v in GRAVITY_LEVEL.items()
+                        if gravity > v[0] and gravity <= v[1]
+                    ][0]
                 elif (i, j) in configDict["Parede"]:
                     node.type = NodeType.OBSTACLE
 
@@ -91,11 +90,24 @@ class AgentRescuer:
 
         if sys.argv[1] == "rescuerGA":
             self.plan = RescuerPlan(
-                self.tl, model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
+                self.tl,
+                model.rows,
+                model.columns,
+                self.prob.goalState,
+                initial,
+                self.map,
+                "goal",
+                self.mesh,
             )
         else:
             self.plan = RescuerPlanAStar(
-                model.rows, model.columns, self.prob.goalState, initial, self.map, "goal", self.mesh
+                model.rows,
+                model.columns,
+                self.prob.goalState,
+                initial,
+                self.map,
+                "goal",
+                self.mesh,
             )
         ## Adiciona o(s) planos a biblioteca de planos do agente
         self.libPlan = [self.plan]
@@ -134,9 +146,18 @@ class AgentRescuer:
         self.tl -= self.prob.getActionCost(self.previousAction)
         print("Tempo disponivel: ", self.tl)
 
-        if (
-            self.prob.goalTest(self.currentState) and (self.tl <= 0.5 or self.plan.goalTest()
-            or len([node for nodes in self.map for node in nodes if node.type == NodeType.VICTIM]) == 0)
+        if self.prob.goalTest(self.currentState) and (
+            self.tl <= 0.5
+            or self.plan.goalTest()
+            or len(
+                [
+                    node
+                    for nodes in self.map
+                    for node in nodes
+                    if node.type == NodeType.VICTIM
+                ]
+            )
+            == 0
         ):
             print("!!! Objetivo atingido !!!")
             del self.libPlan[0]
@@ -152,7 +173,14 @@ class AgentRescuer:
                 gravity = float(values[6])
                 victims += 1
                 print(gravity)
-                totalGravities[[k for k, v in GRAVITY_LEVEL.items() if gravity > v[0] and gravity <= v[1]][0] - 1] += 1
+                totalGravities[
+                    [
+                        k
+                        for k, v in GRAVITY_LEVEL.items()
+                        if gravity > v[0] and gravity <= v[1]
+                    ][0]
+                    - 1
+                ] += 1
 
             print(totalGravities)
             saved = [s for k in self.map for s in k if s.type == NodeType.SAVED]
@@ -162,30 +190,33 @@ class AgentRescuer:
                 savedGravities[s.gravityLevel - 1] += 1
 
             vsg = sum(
-                (
-                    gravity * (4 - idx)
-                    for (idx, gravity) in enumerate(savedGravities)
-                )
+                (gravity * (4 - idx) for (idx, gravity) in enumerate(savedGravities))
             ) / sum(
                 (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
             )
 
             print("Estatísticas:")
             print("------------------------------")
-            print(
-                f"pvs = {len(saved)}/{victims} = {len(saved) / victims}"
-            )
-            print(
-                f"tvs = {self.costAll}/{len(saved)} = {self.costAll / len(saved)}"
-            )
+            print(f"pvs = {len(saved)}/{victims} = {len(saved) / victims}")
+            print(f"tvs = {self.costAll}/{len(saved)} = {self.costAll / len(saved)}")
             print(f"vsg = {vsg}")
 
-        if self.map[self.currentState.row][self.currentState.col].type == NodeType.VICTIM:
-            self.map[self.currentState.row][self.currentState.col].type =  NodeType.SAVED
+        if (
+            self.map[self.currentState.row][self.currentState.col].type
+            == NodeType.VICTIM
+        ):
+            self.map[self.currentState.row][self.currentState.col].type = NodeType.SAVED
 
-        if self.map[self.currentState.row][self.currentState.col].type == NodeType.SAVED:
-            self.model.maze.board.listPlaces[self.currentState.row][self.currentState.col].victim = False
-            self.model.maze.board.listPlaces[self.currentState.row][self.currentState.col].saved = True
+        if (
+            self.map[self.currentState.row][self.currentState.col].type
+            == NodeType.SAVED
+        ):
+            self.model.maze.board.listPlaces[self.currentState.row][
+                self.currentState.col
+            ].victim = False
+            self.model.maze.board.listPlaces[self.currentState.row][
+                self.currentState.col
+            ].saved = True
 
         result = self.plan.chooseAction(self.tl)
         print(

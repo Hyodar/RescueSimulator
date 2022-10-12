@@ -128,7 +128,7 @@ class Square:
         return False
 
     ## Metodo que atualiza a cor do bloco de acordo com o item
-    def updateColor(self, agentColor = (0, 255, 0)):
+    def updateColor(self, agentColor=(0, 255, 0)):
         if self.itemInside == "Parede":
             self.color = (139, 69, 19)
         elif self.itemInside == "Cone":

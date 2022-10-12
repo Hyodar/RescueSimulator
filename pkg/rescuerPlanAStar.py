@@ -26,13 +26,21 @@ reverse = {
 
 class RescuerPlanAStar:
     def __init__(
-        self, maxRows, maxColumns, goal, initialState, discoveredMap: list, name="none", mesh="square"
+        self,
+        maxRows,
+        maxColumns,
+        goal,
+        initialState,
+        discoveredMap: list,
+        name="none",
+        mesh="square",
     ):
         """
         Define as variaveis necessárias para a utilização do rescuer plan por um unico agente.
         """
         self.walls = [
-            [discoveredMap[i][j].type == NodeType.OBSTACLE for j in range(maxColumns)] for i in range(maxRows)
+            [discoveredMap[i][j].type == NodeType.OBSTACLE for j in range(maxColumns)]
+            for i in range(maxRows)
         ]
         self.maxRows = maxRows
         self.maxColumns = maxColumns
@@ -44,17 +52,21 @@ class RescuerPlanAStar:
 
         self.backtrack = []
         self.map = discoveredMap
-        self.victims = [discoveredMap[row][col] for row,_ in enumerate(discoveredMap)
-            for col,_ in enumerate(discoveredMap[row])
-                if discoveredMap[row][col].type == NodeType.VICTIM
+        self.victims = [
+            discoveredMap[row][col]
+            for row, _ in enumerate(discoveredMap)
+            for col, _ in enumerate(discoveredMap[row])
+            if discoveredMap[row][col].type == NodeType.VICTIM
         ]
 
         self.victims.sort(key=lambda v: v.gravityLevel)
 
         self.distances = {
             victim.state: {
-                victim2.state: pathCost(self.aStar(victim.state, victim2.state)) for victim2 in self.victims
-            } for victim in self.victims
+                victim2.state: pathCost(self.aStar(victim.state, victim2.state))
+                for victim2 in self.victims
+            }
+            for victim in self.victims
         }
 
         tmpVictims = []
@@ -108,7 +120,10 @@ class RescuerPlanAStar:
         delta_col = toState.col - fromState.col
 
         if delta_row != 0 and delta_col != 0:
-            if self.walls[fromState.row + delta_row][fromState.col] and self.walls[fromState.row][fromState.col + delta_col]:
+            if (
+                self.walls[fromState.row + delta_row][fromState.col]
+                and self.walls[fromState.row][fromState.col + delta_col]
+            ):
                 return False
 
         return True
@@ -195,8 +210,13 @@ class RescuerPlanAStar:
         @return: tupla contendo a acao (direcao) e uma instância da classe State que representa a posição esperada após a execução
         """
 
-        self.currentVictim = next((v for v in self.victims if v.type == NodeType.VICTIM), None)
-        pathVictim = self.aStar(self.currentState, self.currentVictim.state if self.currentVictim else self.goalPos)
+        self.currentVictim = next(
+            (v for v in self.victims if v.type == NodeType.VICTIM), None
+        )
+        pathVictim = self.aStar(
+            self.currentState,
+            self.currentVictim.state if self.currentVictim else self.goalPos,
+        )
         pathGoal = self.aStar(self.currentState, self.goalPos)
         pathPostVictim = self.aStar(pathVictim[-1], self.goalPos)
         costVictim = 0
@@ -231,13 +251,13 @@ class RescuerPlanAStar:
         if len(pathToGo) == 2 and self.currentVictim:
             self.currentVictim.type = NodeType.SAVED
             print(
-                    "vitima salva em ",
-                    self.currentState,
-                    " id: ",
-                    self.currentVictim.victimId,
-                    " nível de gravidade: ",
-                    self.currentVictim.gravityLevel,
-                )
+                "vitima salva em ",
+                self.currentState,
+                " id: ",
+                self.currentVictim.victimId,
+                " nível de gravidade: ",
+                self.currentVictim.gravityLevel,
+            )
 
         pathToGo.reverse()
         pathToGo.pop()
@@ -267,13 +287,11 @@ class RescuerPlanAStar:
         nextMove = self.move()
         return (nextMove[1], self.goalPos == State(nextMove[0][0], nextMove[0][1]))
 
+
 def pathCost(path):
     cost = 0
     for (idx, state) in enumerate(path[0:-1]):
         cost += 1
-        if (
-            state.row - path[idx + 1].row != 0
-            and state.col - path[idx + 1].col != 0
-        ):
+        if state.row - path[idx + 1].row != 0 and state.col - path[idx + 1].col != 0:
             cost += 0.5
     return cost

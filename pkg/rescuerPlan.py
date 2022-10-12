@@ -15,14 +15,10 @@ movePos = {
     "SE": (1, 1),
     "SO": (1, -1),
 }
-GRAVITY_LEVEL = {
-    1: [0.0, 25.0],
-    2: [25.0, 50.0],
-    3: [50.0, 75.0],
-    4: [75.0, 100.0]
-}
+GRAVITY_LEVEL = {1: [0.0, 25.0], 2: [25.0, 50.0], 3: [50.0, 75.0], 4: [75.0, 100.0]}
 
-class Population():
+
+class Population:
     def __init__(self, plan, base, bag, vitalSignals, vsgDenominator):
         self.bag = bag
         self.parents = []
@@ -46,7 +42,7 @@ class Population():
             base,
             [np.random.permutation(victimStates) for _ in range(populationCount)],
             vitalSignals,
-            vsgDenominator
+            vsgDenominator,
         )
 
     def getSaved(self, chromosome, tl):
@@ -79,14 +75,13 @@ class Population():
         for victim in saved:
             gravities[self.vitalSignals[victim] - 1] += 1
 
-        return sum(
-            (gravity * (4 - idx) for (idx, gravity) in enumerate(gravities))
-        ) / self.vsgDenominator
+        return (
+            sum((gravity * (4 - idx) for (idx, gravity) in enumerate(gravities)))
+            / self.vsgDenominator
+        )
 
     def evaluate(self, tl):
-        scores = np.asarray(
-            [self.fitness(chromosome, tl) for chromosome in self.bag]
-        )
+        scores = np.asarray([self.fitness(chromosome, tl) for chromosome in self.bag])
         self.score = np.min(scores)
         self.best = self.bag[scores.tolist().index(self.score)]
         self.parents.append(self.best)
@@ -117,9 +112,7 @@ class Population():
 
         for _ in range(len(self.bag)):
             if np.random.rand() < pCross:
-                children.append(
-                    list(self.parents[np.random.randint(count, size=1)[0]])
-                )
+                children.append(list(self.parents[np.random.randint(count, size=1)[0]]))
             else:
                 parent1, parent2 = random.choices(self.parents, k=2)
 
@@ -154,20 +147,34 @@ class Population():
 
         return nextBag
 
+
 def pathCost(path):
     cost = 0
     for (idx, state) in enumerate(path[0:-1]):
         cost += 1
-        if (
-            state.row - path[idx + 1].row != 0
-            and state.col - path[idx + 1].col != 0
-        ):
+        if state.row - path[idx + 1].row != 0 and state.col - path[idx + 1].col != 0:
             cost += 0.5
     return cost
 
 
-def geneticAlgorithm(plan, victimNodes, base, maxTime, vsgDenominator, populationCount=20, iterations=100, selectivity=0.2, pCross=0.4, pMut=0.7, printInterval=100, returnHistory=False, verbose=False):
-    population = Population.fromNodes(plan, victimNodes, base, populationCount, vsgDenominator)
+def geneticAlgorithm(
+    plan,
+    victimNodes,
+    base,
+    maxTime,
+    vsgDenominator,
+    populationCount=20,
+    iterations=100,
+    selectivity=0.2,
+    pCross=0.4,
+    pMut=0.7,
+    printInterval=100,
+    returnHistory=False,
+    verbose=False,
+):
+    population = Population.fromNodes(
+        plan, victimNodes, base, populationCount, vsgDenominator
+    )
     best = population.best
     print(best)
     score = 0
@@ -199,15 +206,25 @@ def geneticAlgorithm(plan, victimNodes, base, maxTime, vsgDenominator, populatio
     else:
         return best
 
+
 class RescuerPlan:
     def __init__(
-        self, tl, maxRows, maxColumns, goal, initialState, discoveredMap: list, name="none", mesh="square"
+        self,
+        tl,
+        maxRows,
+        maxColumns,
+        goal,
+        initialState,
+        discoveredMap: list,
+        name="none",
+        mesh="square",
     ):
         """
         Define as variaveis necessárias para a utilização do rescuer plan por um unico agente.
         """
         self.walls = [
-            [discoveredMap[i][j].type == NodeType.OBSTACLE for j in range(maxColumns)] for i in range(maxRows)
+            [discoveredMap[i][j].type == NodeType.OBSTACLE for j in range(maxColumns)]
+            for i in range(maxRows)
         ]
 
         self.maxRows = maxRows
@@ -221,9 +238,11 @@ class RescuerPlan:
 
         self.backtrack = []
         self.map = discoveredMap
-        self.victims = [discoveredMap[row][col] for row,_ in enumerate(discoveredMap)
-            for col,_ in enumerate(discoveredMap[row])
-                if discoveredMap[row][col].type == NodeType.VICTIM
+        self.victims = [
+            discoveredMap[row][col]
+            for row, _ in enumerate(discoveredMap)
+            for col, _ in enumerate(discoveredMap[row])
+            if discoveredMap[row][col].type == NodeType.VICTIM
         ]
 
         self.currentVictim = None
@@ -240,7 +259,16 @@ class RescuerPlan:
             (gravity * (4 - idx) for (idx, gravity) in enumerate(totalGravities))
         )
 
-        print(geneticAlgorithm(self, self.victims, self.initialState, self.tl, self.vsgDenominator, printInterval=1))
+        print(
+            geneticAlgorithm(
+                self,
+                self.victims,
+                self.initialState,
+                self.tl,
+                self.vsgDenominator,
+                printInterval=1,
+            )
+        )
 
     def updateCurrentState(self, state):
         self.currentState = state
@@ -267,7 +295,10 @@ class RescuerPlan:
         delta_col = toState.col - fromState.col
 
         if delta_row != 0 and delta_col != 0:
-            if self.walls[fromState.row + delta_row][fromState.col] and self.walls[fromState.row][fromState.col + delta_col]:
+            if (
+                self.walls[fromState.row + delta_row][fromState.col]
+                and self.walls[fromState.row][fromState.col + delta_col]
+            ):
                 return False
 
         return True
@@ -350,8 +381,13 @@ class RescuerPlan:
         @return: tupla contendo a acao (direcao) e uma instância da classe State que representa a posição esperada após a execução
         """
 
-        self.currentVictim = next((v for v in self.victims if v.type == NodeType.VICTIM), None)
-        pathVictim = self.aStar(self.currentState, self.currentVictim.state if self.currentVictim else self.goalPos)
+        self.currentVictim = next(
+            (v for v in self.victims if v.type == NodeType.VICTIM), None
+        )
+        pathVictim = self.aStar(
+            self.currentState,
+            self.currentVictim.state if self.currentVictim else self.goalPos,
+        )
         pathGoal = self.aStar(self.currentState, self.goalPos)
         pathPostVictim = self.aStar(pathVictim[-1], self.goalPos)
         costVictim = 0
@@ -386,13 +422,13 @@ class RescuerPlan:
         if len(pathToGo) == 2 and self.currentVictim:
             self.currentVictim.type = NodeType.SAVED
             print(
-                    "vitima salva em ",
-                    self.currentState,
-                    " id: ",
-                    self.currentVictim.victimId,
-                    " nível de gravidade: ",
-                    self.currentVictim.gravityLevel,
-                )
+                "vitima salva em ",
+                self.currentState,
+                " id: ",
+                self.currentVictim.victimId,
+                " nível de gravidade: ",
+                self.currentVictim.gravityLevel,
+            )
 
         pathToGo.reverse()
         pathToGo.pop()

@@ -72,7 +72,11 @@ class Maze:
     def updateWalls(self):
 
         ## Metodo que atualiza a lista dos objetos (vitimas) que estao no labirinto
-        filename = "sinaisvitais.txt" if sys.argv[1] == "explorer" else "sinaisvitais_rescuer.txt"
+        filename = (
+            "sinaisvitais.txt"
+            if sys.argv[1] == "explorer"
+            else "sinaisvitais_rescuer.txt"
+        )
         vs_file = open(os.path.join("config_data", filename), "r")
 
         ## Pega a matriz com todos os lugares (seja quadrado ou triangulo)
